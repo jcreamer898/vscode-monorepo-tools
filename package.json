@@ -1,0 +1,89 @@
+{
+    "name": "vscode-monorepo-tools",
+    "displayName": "vscode-monorepo-tools",
+    "description": "Tools for working in monorepos.",
+    "version": "0.0.1",
+    "publisher": "jcreamer",
+    "engines": {
+        "vscode": "^1.54.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "*"
+    ],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "vscode-monorepo-tools.loadPackages",
+                "title": "Monorepo Tools: Load Packages"
+            },
+            {
+                "command": "vscode-monorepo-tools.goToPackage",
+                "title": "Go To Package"
+            }
+        ],
+        "views": {
+            "monorepo-explorer": [
+                {
+                    "id": "monorepoDependencies",
+                    "name": "Monorepo Dependencies",
+                    "icon": "media/dep.svg"
+                }
+            ]
+        },
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "monorepo-explorer",
+                    "title": "Monorepo Explorer",
+                    "icon": "media/dep.svg"
+                }
+            ]
+        },
+        "menus": {
+            "view/item/context": [
+                {
+                    "command": "vscode-monorepo-tools.goToPackage",
+                    "when": "view == monorepoDependencies && viewItem == dependency"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "test-compile": "tsc -p ./",
+        "test-watch": "tsc -watch -p ./",
+        "pretest": "npm run test-compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js"
+    },
+    "devDependencies": {
+        "@types/glob": "^7.1.3",
+        "@types/mocha": "^8.0.4",
+        "@types/node": "^12.11.7",
+        "@types/vscode": "^1.54.0",
+        "@typescript-eslint/eslint-plugin": "^4.14.1",
+        "@typescript-eslint/parser": "^4.14.1",
+        "eslint": "^7.19.0",
+        "glob": "^7.1.6",
+        "mocha": "^8.2.1",
+        "ts-loader": "^8.0.14",
+        "typescript": "^4.1.3",
+        "vscode-test": "^1.5.0",
+        "webpack": "^5.19.0",
+        "webpack-cli": "^4.4.0"
+    },
+    "dependencies": {
+        "@changesets/get-dependents-graph": "^1.2.0",
+        "@manypkg/find-root": "^1.1.0",
+        "@manypkg/get-packages": "^1.1.1",
+        "pkg-up": "^3.1.0",
+        "read-pkg-up": "^7.0.1"
+    }
+}
