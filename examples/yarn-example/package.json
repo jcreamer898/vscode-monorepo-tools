@@ -1,0 +1,11 @@
+{
+    "name": "yarn-example",
+    "private": true,
+    "description": "Sample yarn workspace",
+    "dependencies": {},
+    "workspaces": {
+        "packages": [
+            "packages/*"
+        ]
+    }
+}

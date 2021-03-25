@@ -4,11 +4,12 @@ import * as vscode from 'vscode';
 import path from 'path';
 import { Dependency } from './dependency';
 import { MonorepoDependenciesProvider } from './dependencyProvider';
-import { readJson } from './readJson';
+import { RunScriptCommand } from './commands/runScript';
+import { ChangeTextEditorEvent } from './events/changeTextEditor';
 
 const pkgUp = require('pkg-up');
 
-let myStatusBarItem: vscode.StatusBarItem;
+let statusBarItem: vscode.StatusBarItem;
 let treeProvider: MonorepoDependenciesProvider;
 let treeView: vscode.TreeView<Dependency>;
 
@@ -30,11 +31,16 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     });
     const loadPackagesCommand = 'vscode-monorepo-tools.loadPackages';
 
-    myStatusBarItem = vscode.window.createStatusBarItem(
+    statusBarItem = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Left
     );
-    myStatusBarItem.command = loadPackagesCommand;
+    statusBarItem.command = loadPackagesCommand;
 
+    const editorChange = new ChangeTextEditorEvent(
+        treeProvider,
+        treeView,
+        statusBarItem
+    );
     subscriptions.push(
         vscode.commands.registerCommand(loadPackagesCommand, async () => {
             const first = await treeProvider.getFirst();
@@ -59,66 +65,20 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
                 vscode.commands.executeCommand('revealInExplorer', uri);
             }
         ),
-        vscode.window.onDidChangeActiveTextEditor(onDidChangeActiveTextEditor),
+        vscode.window.onDidChangeActiveTextEditor(() => editorChange.run()),
         treeView,
-        myStatusBarItem,
+        statusBarItem,
         vscode.commands.registerCommand(
             'vscode-monorepo-tools.runPkgScript',
-            async (node) => {
-                const filePath = path.join(node.pkg.dir, 'package.json');
-                const json = readJson(filePath);
-                const scripts = json.scripts;
-                const scriptNames = Object.keys(scripts);
-
-                if (!scriptNames.length) {
-                    return;
-                }
-
-                const selected = await vscode.window.showQuickPick(
-                    scriptNames.map((key: string) => ({
-                        label: key,
-                        description: scripts[key],
-                    }))
-                );
-
-                if (selected) {
-                    const cmd = treeProvider.scriptRunner(node, selected.label);
-
-                    if (!cmd) {
-                        return;
-                    }
-
-                    const terminal =
-                        vscode.window.terminals.find(
-                            (t) => t.name === `Run Script`
-                        ) || vscode.window.createTerminal(`Run Script`);
-
-                    terminal.show();
-                    terminal.sendText(`cd ${treeProvider.workspaceRoot}`);
-                    terminal.sendText(cmd);
-                }
-            }
+            (node) => new RunScriptCommand(treeProvider).run(node)
         )
     );
 
-    myStatusBarItem.show();
-    myStatusBarItem.text = 'Loading workspace';
+    statusBarItem.show();
+    statusBarItem.text = 'Loading workspace';
 
-    await onDidChangeActiveTextEditor();
+    await editorChange.run();
 }
-
-const onDidChangeActiveTextEditor = async () => {
-    const filename = vscode.window.activeTextEditor?.document.fileName;
-
-    if (!filename) {
-        return;
-    }
-
-    await treeProvider.loadGraphFromFile(filename);
-
-    treeView.title = treeProvider.titleText();
-    myStatusBarItem.text = treeProvider.statusText();
-};
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
