@@ -1,10 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { getPackages, Package, Packages } from '@manypkg/get-packages';
-import { getDependentsGraph } from '@changesets/get-dependents-graph';
-import * as path from 'path';
-import * as fs from 'fs';
+import path from 'path';
 import { Dependency } from './dependency';
 import { MonorepoDependenciesProvider } from './dependencyProvider';
 
@@ -45,12 +42,19 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         vscode.commands.registerCommand(
             'vscode-monorepo-tools.goToPackage',
             (node: Dependency) => {
-                const openPath = vscode.Uri.parse(
-                    'file:///' + `${node.pkg.dir}/package.json`
-                );
-                vscode.workspace.openTextDocument(openPath).then((doc) => {
+                const filePath = path.join(node.pkg.dir, 'package.json');
+
+                vscode.workspace.openTextDocument(filePath).then((doc) => {
                     vscode.window.showTextDocument(doc);
                 });
+            }
+        ),
+        vscode.commands.registerCommand(
+            'vscode-monorepo-tools.showPackage',
+            (node: Dependency) => {
+                const filePath = path.join(node.pkg.dir, 'package.json');
+
+                vscode.commands.executeCommand('revealInExplorer', filePath);
             }
         ),
         vscode.window.onDidChangeActiveTextEditor(onDidChangeActiveTextEditor),

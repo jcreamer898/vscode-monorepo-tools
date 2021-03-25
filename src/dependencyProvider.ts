@@ -12,6 +12,7 @@ import { getDependentsGraph } from '@changesets/get-dependents-graph';
 import pkgUp from 'pkg-up';
 import * as path from 'path';
 import * as fs from 'fs';
+import { readJson } from './readJson';
 
 type TreeChangeEvent = Dependency | undefined | null | void;
 
@@ -34,6 +35,8 @@ export class MonorepoDependenciesProvider
      * Map of packages in workspaceRoot
      */
     packages!: Map<string, Package>;
+
+    activePackage!: Package;
 
     constructor(workspaceRoot: string, pkgJson: any) {
         this.workspaceRoot = workspaceRoot;
@@ -163,7 +166,8 @@ export class MonorepoDependenciesProvider
     async setWorkspaceFromFile(filename: string) {
         let cwd = path.dirname(filename);
 
-        const packageForFilename = await pkgUp({ cwd });
+        const packageForFilename = (await pkgUp({ cwd })) as string;
+
         const rootPackageDir = await findRoot(cwd);
 
         this.workspaceRoot = rootPackageDir;
@@ -172,6 +176,9 @@ export class MonorepoDependenciesProvider
                 .readFileSync(path.join(rootPackageDir, 'package.json'))
                 .toString()
         );
+        const pkgName = readJson(packageForFilename).name;
+
+        this.activePackage = this.packages.get(pkgName);
 
         this.clearGraph();
     }

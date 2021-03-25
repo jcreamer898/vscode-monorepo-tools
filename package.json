@@ -22,7 +22,11 @@
             },
             {
                 "command": "vscode-monorepo-tools.goToPackage",
-                "title": "Go To Package"
+                "title": "Open package.json"
+            },
+            {
+                "command": "vscode-monorepo-tools.showPackage",
+                "title": "Show in explorer"
             }
         ],
         "views": {
@@ -47,6 +51,10 @@
             "view/item/context": [
                 {
                     "command": "vscode-monorepo-tools.goToPackage",
+                    "when": "view == monorepoDependencies && viewItem == dependency"
+                },
+                {
+                    "command": "vscode-monorepo-tools.showPackage",
                     "when": "view == monorepoDependencies && viewItem == dependency"
                 }
             ]
