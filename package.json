@@ -4,6 +4,10 @@
     "description": "Tools for working in monorepos.",
     "version": "0.0.1",
     "publisher": "jcreamer",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jcreamer898/vscode-monorepo-tools"
+    },
     "engines": {
         "vscode": "^1.54.0"
     },
