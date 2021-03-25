@@ -4,6 +4,7 @@ Monorepo Tools is a VSCode extension that gives developers insight into their mo
 
 ## Features
 
+-   Works with Yarn workspaces, Bolt, Lerna, and PNPM via [Manypkg/get-packages](https://github.com/Thinkmill/manypkg/tree/master/packages/get-packages)
 -   Dependency Tree view
 
 ![Markup on 2021-03-25 at 11:57:35](https://user-images.githubusercontent.com/472487/112513986-dbddf500-8d62-11eb-96ed-f979ddc08c3e.png)
@@ -16,4 +17,6 @@ Monorepo Tools is a VSCode extension that gives developers insight into their mo
 
 ![Screen Capture on 2021-03-25 at 12-08-12](https://user-images.githubusercontent.com/472487/112514011-e3050300-8d62-11eb-96fb-0666b3644a87.gif)
 
--   Works with Yarn workspaces, Bolt, Lerna, and PNPM via [Manypkg/get-packages](https://github.com/Thinkmill/manypkg/tree/master/packages/get-packages)
+-   Install dependencies for your workspace tool
+
+![Screen Capture on 2021-03-25 at 12-41-48](https://user-images.githubusercontent.com/472487/112518712-a2f44f00-8d67-11eb-88de-b8fc1c5d21e8.gif)
