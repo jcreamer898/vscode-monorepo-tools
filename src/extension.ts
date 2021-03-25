@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import path from 'path';
 import { Dependency } from './dependency';
 import { MonorepoDependenciesProvider } from './dependencyProvider';
+import { readJson } from './readJson';
 
 const pkgUp = require('pkg-up');
 
@@ -43,8 +44,9 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
             'vscode-monorepo-tools.goToPackage',
             (node: Dependency) => {
                 const filePath = path.join(node.pkg.dir, 'package.json');
+                const uri = vscode.Uri.file(filePath);
 
-                vscode.workspace.openTextDocument(filePath).then((doc) => {
+                vscode.workspace.openTextDocument(uri).then((doc) => {
                     vscode.window.showTextDocument(doc);
                 });
             }
@@ -53,13 +55,50 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
             'vscode-monorepo-tools.showPackage',
             (node: Dependency) => {
                 const filePath = path.join(node.pkg.dir, 'package.json');
-
-                vscode.commands.executeCommand('revealInExplorer', filePath);
+                const uri = vscode.Uri.file(filePath);
+                vscode.commands.executeCommand('revealInExplorer', uri);
             }
         ),
         vscode.window.onDidChangeActiveTextEditor(onDidChangeActiveTextEditor),
         treeView,
-        myStatusBarItem
+        myStatusBarItem,
+        vscode.commands.registerCommand(
+            'vscode-monorepo-tools.runPkgScript',
+            async (node) => {
+                const filePath = path.join(node.pkg.dir, 'package.json');
+                const json = readJson(filePath);
+                const scripts = json.scripts;
+                const scriptNames = Object.keys(scripts);
+
+                if (!scriptNames.length) {
+                    return;
+                }
+
+                const selected = await vscode.window.showQuickPick(
+                    scriptNames.map((key: string) => ({
+                        label: key,
+                        description: scripts[key],
+                    }))
+                );
+
+                if (selected) {
+                    const cmd = treeProvider.scriptRunner(node, selected.label);
+
+                    if (!cmd) {
+                        return;
+                    }
+
+                    const terminal =
+                        vscode.window.terminals.find(
+                            (t) => t.name === `Run Script`
+                        ) || vscode.window.createTerminal(`Run Script`);
+
+                    terminal.show();
+                    terminal.sendText(`cd ${treeProvider.workspaceRoot}`);
+                    terminal.sendText(cmd);
+                }
+            }
+        )
     );
 
     myStatusBarItem.show();
@@ -75,10 +114,8 @@ const onDidChangeActiveTextEditor = async () => {
         return;
     }
 
-    await treeProvider.setWorkspaceFromFile(filename);
-    await treeProvider.loadGraph();
+    await treeProvider.loadGraphFromFile(filename);
 
-    treeProvider.refresh();
     treeView.title = treeProvider.titleText();
     myStatusBarItem.text = treeProvider.statusText();
 };

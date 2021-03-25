@@ -23,8 +23,9 @@ export class MonorepoDependenciesProvider
         ._onDidChangeTreeData.event;
 
     workspaceRoot: string;
-
     workspacePkgJson: Record<string, any>;
+    workspaceTool!: string;
+    rootPkg!: Dependency;
 
     /**
      * Dependency graph for a given workspace root
@@ -34,9 +35,9 @@ export class MonorepoDependenciesProvider
     /**
      * Map of packages in workspaceRoot
      */
-    packages!: Map<string, Package>;
+    packages: Map<string, Dependency> = new Map();
 
-    activePackage!: Package;
+    activePackage!: Dependency;
 
     constructor(workspaceRoot: string, pkgJson: any) {
         this.workspaceRoot = workspaceRoot;
@@ -74,25 +75,14 @@ export class MonorepoDependenciesProvider
         }
 
         if (element.pkg.packageJson.name === this.workspacePkgJson.name) {
-            return Array.from(graph?.keys()).map((key) => {
-                const pkg = this.packages.get(key);
-
-                return new Dependency(
-                    pkg as Package,
-                    TreeItemCollapsibleState.Collapsed
-                );
-            });
+            return Array.from(this.packages.values());
         }
 
         const deps = graph?.get(element.label as string);
 
         if (deps) {
             return deps?.map(
-                (name) =>
-                    new Dependency(
-                        this.packages.get(name) as Package,
-                        TreeItemCollapsibleState.Collapsed
-                    )
+                (name: string) => this.packages.get(name) as Dependency
             );
         }
 
@@ -100,28 +90,12 @@ export class MonorepoDependenciesProvider
     }
 
     getRoot() {
-        return this.workspacePkgJson
-            ? new Dependency(
-                  {
-                      packageJson: this
-                          .workspacePkgJson as Package['packageJson'],
-                      dir: this.workspaceRoot,
-                  },
-                  TreeItemCollapsibleState.Expanded
-              )
-            : null;
+        return this.rootPkg;
     }
 
     getParent(element: Dependency) {
         if (!element) {
-            return new Dependency(
-                {
-                    packageJson: this
-                        .workspacePkgJson as Package['packageJson'],
-                    dir: this.workspaceRoot,
-                },
-                TreeItemCollapsibleState.Collapsed
-            );
+            return this.rootPkg;
         }
 
         return null;
@@ -130,7 +104,7 @@ export class MonorepoDependenciesProvider
     async getFirst() {
         await this.loadGraph();
         const [, pkg] = this.packages.entries().next().value;
-        return new Dependency(pkg, TreeItemCollapsibleState.Collapsed);
+        return pkg;
     }
 
     /**
@@ -150,9 +124,13 @@ export class MonorepoDependenciesProvider
         const graph = await getDependentsGraph(packages);
 
         this.graph = graph;
-        this.packages = new Map<string, Package>();
+        this.workspaceTool = packages.tool;
+
         packages.packages.forEach((pkg) =>
-            this.packages.set(pkg.packageJson.name, pkg)
+            this.packages.set(
+                pkg.packageJson.name,
+                new Dependency(pkg, TreeItemCollapsibleState.Collapsed)
+            )
         );
 
         return graph;
@@ -163,24 +141,36 @@ export class MonorepoDependenciesProvider
      * @param root
      * @param pkgJson
      */
-    async setWorkspaceFromFile(filename: string) {
-        let cwd = path.dirname(filename);
+    async loadGraphFromFile(filename: string) {
+        try {
+            let cwd = path.dirname(filename);
 
-        const packageForFilename = (await pkgUp({ cwd })) as string;
+            const packageForFilename = (await pkgUp({ cwd })) as string;
+            const rootPackageDir = await findRoot(cwd);
 
-        const rootPackageDir = await findRoot(cwd);
+            this.workspaceRoot = rootPackageDir;
+            this.workspacePkgJson = readJson(
+                path.join(rootPackageDir, 'package.json')
+            );
 
-        this.workspaceRoot = rootPackageDir;
-        this.workspacePkgJson = JSON.parse(
-            fs
-                .readFileSync(path.join(rootPackageDir, 'package.json'))
-                .toString()
-        );
-        const pkgName = readJson(packageForFilename).name;
+            this.rootPkg = new Dependency(
+                {
+                    packageJson: this
+                        .workspacePkgJson as Package['packageJson'],
+                    dir: this.workspaceRoot,
+                },
+                TreeItemCollapsibleState.Expanded
+            );
 
-        this.activePackage = this.packages.get(pkgName);
+            this.clearGraph();
+            await this.loadGraph();
 
-        this.clearGraph();
+            const pkgName = readJson(packageForFilename).name;
+            this.activePackage = this.packages.get(pkgName) as Dependency;
+            this.refresh();
+        } catch (e) {
+            console.error(`Problem loading graph: ${e.message}`);
+        }
     }
 
     /**
@@ -188,6 +178,7 @@ export class MonorepoDependenciesProvider
      */
     clearGraph() {
         this.graph = new Map<string, string[]>();
+        this.packages = new Map<string, Dependency>();
     }
 
     statusText() {
@@ -202,5 +193,16 @@ export class MonorepoDependenciesProvider
         }
 
         return `${this.workspacePkgJson.name}`;
+    }
+
+    scriptRunner(dependency: Dependency, script: string) {
+        switch (this.workspaceTool) {
+            case 'yarn':
+                return `yarn workspace ${dependency.pkg.packageJson.name} run ${script}`;
+            case 'lerna':
+                return `lerna run --scope ${dependency.pkg.dir} ${script}`;
+            default:
+                return null;
+        }
     }
 }

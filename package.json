@@ -27,6 +27,10 @@
             {
                 "command": "vscode-monorepo-tools.showPackage",
                 "title": "Show in explorer"
+            },
+            {
+                "command": "vscode-monorepo-tools.runPkgScript",
+                "title": "Run Script"
             }
         ],
         "views": {
@@ -55,6 +59,10 @@
                 },
                 {
                     "command": "vscode-monorepo-tools.showPackage",
+                    "when": "view == monorepoDependencies && viewItem == dependency"
+                },
+                {
+                    "command": "vscode-monorepo-tools.runPkgScript",
                     "when": "view == monorepoDependencies && viewItem == dependency"
                 }
             ]
