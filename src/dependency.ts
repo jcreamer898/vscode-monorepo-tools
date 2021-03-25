@@ -5,13 +5,14 @@ import * as path from 'path';
 export class Dependency extends vscode.TreeItem {
     constructor(
         public readonly pkg: Package,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+        public readonly root: boolean = false
     ) {
         super(pkg.packageJson.name, collapsibleState);
         this.tooltip = `${this.label}`;
         this.description = pkg.packageJson.version;
         this.pkg = pkg;
-        this.contextValue = 'dependency';
+        this.contextValue = root ? 'root' : 'dependency';
     }
 
     iconPath = {

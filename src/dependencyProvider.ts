@@ -95,7 +95,7 @@ export class MonorepoDependenciesProvider
 
     getParent(element: Dependency) {
         if (!element) {
-            return this.rootPkg;
+            return this.getRoot();
         }
 
         return null;
@@ -159,7 +159,8 @@ export class MonorepoDependenciesProvider
                         .workspacePkgJson as Package['packageJson'],
                     dir: this.workspaceRoot,
                 },
-                TreeItemCollapsibleState.Expanded
+                TreeItemCollapsibleState.Expanded,
+                true
             );
 
             this.clearGraph();
@@ -196,16 +197,29 @@ export class MonorepoDependenciesProvider
     }
 
     scriptRunner(dependency: Dependency, script: string) {
-        if (dependency.pkg.packageJson.name === this.workspacePkgJson.name) {
-            switch (this.workspaceTool) {
-                case 'yarn':
-                    return `yarn workspaces run ${script}`;
-                case 'lerna':
-                    return `lerna run ${script}`;
-                case 'bolt':
-                    return `bolt ws run ${script}`;
-                default:
-                    return null;
+        if (dependency.root) {
+            if (script === 'install') {
+                switch (this.workspaceTool) {
+                    case 'yarn':
+                        return `yarn`;
+                    case 'lerna':
+                        return `lerna bootstrap`;
+                    case 'bolt':
+                        return `bolt`;
+                    default:
+                        return null;
+                }
+            } else {
+                switch (this.workspaceTool) {
+                    case 'yarn':
+                        return `yarn workspaces run ${script}`;
+                    case 'lerna':
+                        return `lerna run ${script}`;
+                    case 'bolt':
+                        return `bolt ws run ${script}`;
+                    default:
+                        return null;
+                }
             }
         } else {
             switch (this.workspaceTool) {
