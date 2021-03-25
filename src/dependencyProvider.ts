@@ -129,7 +129,10 @@ export class MonorepoDependenciesProvider
         packages.packages.forEach((pkg) =>
             this.packages.set(
                 pkg.packageJson.name,
-                new Dependency(pkg, TreeItemCollapsibleState.Collapsed)
+                new Dependency(
+                    { ...pkg, tool: this.workspaceTool },
+                    TreeItemCollapsibleState.Collapsed
+                )
             )
         );
 
@@ -153,18 +156,19 @@ export class MonorepoDependenciesProvider
                 path.join(rootPackageDir, 'package.json')
             );
 
+            this.clearGraph();
+            await this.loadGraph();
+
             this.rootPkg = new Dependency(
                 {
                     packageJson: this
                         .workspacePkgJson as Package['packageJson'],
                     dir: this.workspaceRoot,
+                    tool: this.workspaceTool,
                 },
                 TreeItemCollapsibleState.Expanded,
                 true
             );
-
-            this.clearGraph();
-            await this.loadGraph();
 
             const pkgName = readJson(packageForFilename).name;
             this.activePackage = this.packages.get(pkgName) as Dependency;
