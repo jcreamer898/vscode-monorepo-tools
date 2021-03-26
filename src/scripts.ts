@@ -38,19 +38,19 @@ export const installScripts = (workspaceTool: string) => {
             return (
                 vscode.workspace
                     .getConfiguration('monorepoTools')
-                    .get('yarnInstallCommand') || `yarn`
+                    .get<string>('yarnInstallCommand') || `yarn`
             );
         case 'lerna':
             return (
                 vscode.workspace
                     .getConfiguration('monorepoTools')
-                    .get('lernaInstallCommand') || `lerna bootstrap`
+                    .get<string>('lernaInstallCommand') || `lerna bootstrap`
             );
         case 'bolt':
             return (
                 vscode.workspace
                     .getConfiguration('monorepoTools')
-                    .get('boltInstallCommand') || `bolt`
+                    .get<string>('boltInstallCommand') || `bolt`
             );
         default:
             return null;
