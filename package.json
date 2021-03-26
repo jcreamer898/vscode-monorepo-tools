@@ -19,6 +19,30 @@
     ],
     "main": "./dist/extension.js",
     "contributes": {
+        "configuration": {
+            "title": "Monorepo Tools",
+            "properties": {
+                "monorepoTools.yarnInstallCommand": {
+                    "type": "string",
+                    "default": "yarn",
+                    "description": "Command to run to customize how yarn installs. e.g. yarn --network-concurrency 40"
+                },
+                "monorepoTools.lernaInstallCommand": {
+                    "type": "string",
+                    "default": "lerna bootstrap",
+                    "description": "Command to run to customize how lerna installs"
+                },
+                "monorepoTools.boltInstallCommand": {
+                    "type": "string",
+                    "default": "bolt",
+                    "description": "Command to run to customize how bolt installs"
+                },
+                "monorepoTools.packageJsonTemplate": {
+                    "type": "string",
+                    "description": "Path to a custom package.json handlebars template"
+                }
+            }
+        },
         "commands": [
             {
                 "command": "vscode-monorepo-tools.loadPackages",
@@ -39,6 +63,14 @@
             {
                 "command": "vscode-monorepo-tools.install",
                 "title": "Install"
+            },
+            {
+                "command": "vscode-monorepo-tools.addPackage",
+                "title": "Add Package"
+            },
+            {
+                "command": "vscode-monorepo-tools.addDependency",
+                "title": "Add Dependency"
             }
         ],
         "views": {
@@ -74,6 +106,10 @@
                     "when": "view == monorepoDependencies && viewItem == dependency"
                 },
                 {
+                    "command": "vscode-monorepo-tools.addDependency",
+                    "when": "view == monorepoDependencies && viewItem == dependency"
+                },
+                {
                     "command": "vscode-monorepo-tools.goToPackage",
                     "when": "view == monorepoDependencies && viewItem == root"
                 },
@@ -87,6 +123,10 @@
                 },
                 {
                     "command": "vscode-monorepo-tools.install",
+                    "when": "view == monorepoDependencies && viewItem == root"
+                },
+                {
+                    "command": "vscode-monorepo-tools.addPackage",
                     "when": "view == monorepoDependencies && viewItem == root"
                 }
             ]
@@ -124,6 +164,10 @@
         "@changesets/get-dependents-graph": "^1.2.0",
         "@manypkg/find-root": "^1.1.0",
         "@manypkg/get-packages": "^1.1.1",
+        "@types/mkdirp": "^1.0.1",
+        "handlebars": "^4.7.7",
+        "mkdirp": "^1.0.4",
+        "node-plop": "^0.26.2",
         "pkg-up": "^3.1.0",
         "read-pkg-up": "^7.0.1"
     }

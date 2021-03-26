@@ -5,7 +5,7 @@ import * as path from 'path';
 import { MonorepoDependenciesProvider } from '../dependencyProvider';
 import { scriptRunner } from '../scripts';
 
-export class InstallCommand {
+export class AddDependencyCommand {
     treeProvider: MonorepoDependenciesProvider;
 
     constructor(treeProvider: MonorepoDependenciesProvider) {
@@ -13,23 +13,49 @@ export class InstallCommand {
     }
 
     async run(node: Dependency) {
-        const cmd = scriptRunner(
-            this.treeProvider.workspaceTool,
-            node,
-            'install'
+        const deps = Array.from(this.treeProvider.graph.keys());
+
+        if (!deps) {
+            return;
+        }
+
+        const selected = await vscode.window.showQuickPick(
+            [
+                ...deps.map((key: string) => ({
+                    label: key,
+                    description: key,
+                })),
+            ],
+            {
+                canPickMany: true,
+            }
         );
 
-        if (!cmd) {
+        if (!selected) {
             return;
         }
 
         const terminal =
             vscode.window.terminals.find((t) => t.name === `Run Script`) ||
             vscode.window.createTerminal(`Run Script`);
-
         terminal.show();
         terminal.sendText(`cd ${this.treeProvider.workspaceRoot}`);
-        terminal.sendText(cmd);
+
+        for (let item of selected) {
+            const cmd = scriptRunner(
+                this.treeProvider.workspaceTool,
+                node,
+                'add',
+                item.label
+            );
+
+            if (!cmd) {
+                return;
+            }
+
+            terminal.sendText(cmd);
+        }
+
         await this.treeProvider.refreshGraph();
     }
 }

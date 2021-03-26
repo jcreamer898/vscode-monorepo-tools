@@ -13,7 +13,10 @@ const icons: Record<string, string | vscode.ThemeIcon> = {
 };
 export class Dependency extends vscode.TreeItem {
     constructor(
-        public readonly pkg: Package & { tool?: string },
+        public readonly pkg: Package & {
+            tool?: string;
+            children?: string[];
+        },
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly root: boolean = false
     ) {

@@ -4,6 +4,7 @@ import {
     TreeItem,
     TreeItemCollapsibleState,
     Event,
+    window,
 } from 'vscode';
 import { getPackages, Package } from '@manypkg/get-packages';
 import { findRoot } from '@manypkg/find-root';
@@ -13,6 +14,7 @@ import pkgUp from 'pkg-up';
 import * as path from 'path';
 import * as fs from 'fs';
 import { readJson } from './readJson';
+import { installScripts, packageRunScripts, rootRunScripts } from './scripts';
 
 type TreeChangeEvent = Dependency | undefined | null | void;
 
@@ -47,7 +49,7 @@ export class MonorepoDependenciesProvider
     /**
      * Forces the tree view to refresh
      */
-    refresh(): void {
+    private refresh(): void {
         this._onDidChangeTreeData.fire();
     }
 
@@ -74,16 +76,22 @@ export class MonorepoDependenciesProvider
             return root ? [root] : [];
         }
 
-        if (element.pkg.packageJson.name === this.workspacePkgJson.name) {
+        if (element.root) {
             return Array.from(this.packages.values());
         }
 
-        const deps = graph?.get(element.label as string);
+        if (element.pkg.children) {
+            return element.pkg.children?.map((name: string) => {
+                const dep = this.packages.get(name) as Dependency;
 
-        if (deps) {
-            return deps?.map(
-                (name: string) => this.packages.get(name) as Dependency
-            );
+                if (dep.pkg.children?.includes(element.pkg.packageJson.name)) {
+                    window.showInformationMessage(
+                        `Circular dependency: ${element.pkg.packageJson.name} -> ${dep.pkg.packageJson.name}`
+                    );
+                }
+
+                return dep;
+            });
         }
 
         return [];
@@ -109,10 +117,11 @@ export class MonorepoDependenciesProvider
 
     /**
      * Load a cached graph or create a new one
+     * @param force Forces the graph to refresh and not use cache
      * @returns
      */
-    async loadGraph() {
-        if (this.graph.size > 0) {
+    async loadGraph(force = false) {
+        if (!force && this.graph.size > 0) {
             return this.graph;
         }
 
@@ -126,17 +135,26 @@ export class MonorepoDependenciesProvider
         this.graph = graph;
         this.workspaceTool = packages.tool;
 
-        packages.packages.forEach((pkg) =>
+        packages.packages.forEach((pkg) => {
+            const deps = graph.get(pkg.packageJson.name);
+
             this.packages.set(
                 pkg.packageJson.name,
                 new Dependency(
-                    { ...pkg, tool: this.workspaceTool },
-                    TreeItemCollapsibleState.Collapsed
+                    { ...pkg, tool: this.workspaceTool, children: deps },
+                    deps?.length
+                        ? TreeItemCollapsibleState.Collapsed
+                        : TreeItemCollapsibleState.None
                 )
-            )
-        );
+            );
+        });
 
         return graph;
+    }
+
+    async refreshGraph() {
+        await this.loadGraph(true);
+        this.refresh();
     }
 
     /**
@@ -198,44 +216,5 @@ export class MonorepoDependenciesProvider
         }
 
         return `${this.workspacePkgJson.name}`;
-    }
-
-    scriptRunner(dependency: Dependency, script: string) {
-        if (dependency.root) {
-            if (script === 'install') {
-                switch (this.workspaceTool) {
-                    case 'yarn':
-                        return `yarn`;
-                    case 'lerna':
-                        return `lerna bootstrap`;
-                    case 'bolt':
-                        return `bolt`;
-                    default:
-                        return null;
-                }
-            } else {
-                switch (this.workspaceTool) {
-                    case 'yarn':
-                        return `yarn workspaces run ${script}`;
-                    case 'lerna':
-                        return `lerna run ${script}`;
-                    case 'bolt':
-                        return `bolt ws run ${script}`;
-                    default:
-                        return null;
-                }
-            }
-        } else {
-            switch (this.workspaceTool) {
-                case 'yarn':
-                    return `yarn workspace ${dependency.pkg.packageJson.name} run ${script}`;
-                case 'lerna':
-                    return `lerna run --scope ${dependency.pkg.packageJson.name} ${script}`;
-                case 'bolt':
-                    return `bolt w ${dependency.pkg.packageJson.name} run ${script}`;
-                default:
-                    return null;
-            }
-        }
     }
 }

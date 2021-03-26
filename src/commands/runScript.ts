@@ -3,6 +3,7 @@ import { readJson } from '../readJson';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { MonorepoDependenciesProvider } from '../dependencyProvider';
+import { scriptRunner } from '../scripts';
 
 export class RunScriptCommand {
     treeProvider: MonorepoDependenciesProvider;
@@ -42,7 +43,7 @@ export class RunScriptCommand {
             return;
         }
 
-        const cmd = this.treeProvider.scriptRunner(node, script);
+        const cmd = scriptRunner(this.treeProvider.workspaceTool, node, script);
 
         if (!cmd) {
             return;

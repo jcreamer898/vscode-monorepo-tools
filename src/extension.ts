@@ -7,6 +7,8 @@ import { MonorepoDependenciesProvider } from './dependencyProvider';
 import { RunScriptCommand } from './commands/runScript';
 import { ChangeTextEditorEvent } from './events/changeTextEditor';
 import { InstallCommand } from './commands/installScript';
+import { NewPackageCommand } from './commands/newPackage';
+import { AddDependencyCommand } from './commands/addDependency';
 
 const pkgUp = require('pkg-up');
 
@@ -76,6 +78,16 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         vscode.commands.registerCommand(
             'vscode-monorepo-tools.install',
             (node) => new InstallCommand(treeProvider).run(node)
+        ),
+        vscode.commands.registerCommand(
+            'vscode-monorepo-tools.addPackage',
+            (node) => new NewPackageCommand(treeProvider).run(node)
+        ),
+        vscode.commands.registerCommand(
+            'vscode-monorepo-tools.addDependency',
+            (node) => {
+                new AddDependencyCommand(treeProvider).run(node);
+            }
         )
     );
 
