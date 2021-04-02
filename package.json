@@ -80,6 +80,10 @@
             {
                 "command": "vscode-monorepo-tools.addDependency",
                 "title": "Add Dependency"
+            },
+            {
+                "command": "vscode-monorepo-tools.searchInPackage",
+                "title": "Search In Package"
             }
         ],
         "views": {
@@ -116,6 +120,10 @@
                 },
                 {
                     "command": "vscode-monorepo-tools.addDependency",
+                    "when": "view == monorepoDependencies && viewItem == dependency"
+                },
+                {
+                    "command": "vscode-monorepo-tools.searchInPackage",
                     "when": "view == monorepoDependencies && viewItem == dependency"
                 },
                 {

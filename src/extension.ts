@@ -9,6 +9,7 @@ import { ChangeTextEditorEvent } from './events/changeTextEditor';
 import { InstallCommand } from './commands/installScript';
 import { NewPackageCommand } from './commands/newPackage';
 import { AddDependencyCommand } from './commands/addDependency';
+import { SearchInPackageCommand } from './commands/searchInPackage';
 
 const pkgUp = require('pkg-up');
 
@@ -88,11 +89,17 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
             (node) => {
                 new AddDependencyCommand(treeProvider).run(node);
             }
+        ),
+        vscode.commands.registerCommand(
+            'vscode-monorepo-tools.searchInPackage',
+            (node) => {
+                new SearchInPackageCommand(treeProvider).run(node);
+            }
         )
     );
 
     statusBarItem.show();
-    statusBarItem.text = 'Loading workspace';
+    statusBarItem.text = 'Loading workspace...';
 
     await editorChange.run();
 }
