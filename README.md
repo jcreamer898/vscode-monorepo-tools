@@ -1,4 +1,4 @@
-# monorepo-tools README
+# monorepo-tools
 
 Monorepo Tools is a VSCode extension that gives developers insight into their monorepo codebase.
 
@@ -30,10 +30,9 @@ Monorepo Tools is a VSCode extension that gives developers insight into their mo
 
 ![Screen Capture on 2021-03-26 at 11-50-06](https://user-images.githubusercontent.com/472487/112665856-7dc81500-8e29-11eb-86a1-c21edec0dc00.gif)
 
-- Add dependencies to a package
+-   Add dependencies to a package
 
 ![Screen Capture on 2021-03-26 at 11-51-22](https://user-images.githubusercontent.com/472487/112666145-db5c6180-8e29-11eb-8950-87b1ba4a9c2a.gif)
-
 
 ## Configuration
 
