@@ -10,6 +10,7 @@ import { InstallCommand } from './commands/installScript';
 import { NewPackageCommand } from './commands/newPackage';
 import { AddDependencyCommand } from './commands/addDependency';
 import { SearchInPackageCommand } from './commands/searchInPackage';
+import { GoToPackageCommand } from './commands/goToPackage';
 
 const pkgUp = require('pkg-up');
 
@@ -21,6 +22,7 @@ let treeView: vscode.TreeView<Dependency>;
 // your extension is activated the very first time the command is executed
 export async function activate({ subscriptions }: vscode.ExtensionContext) {
     const folders = vscode.workspace.workspaceFolders;
+    console.log('activate');
 
     if (!folders?.length) {
         return;
@@ -75,6 +77,10 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         vscode.commands.registerCommand(
             'vscode-monorepo-tools.runPkgScript',
             (node) => new RunScriptCommand(treeProvider).run(node)
+        ),
+        vscode.commands.registerCommand(
+            'vscode-monorepo-tools.goToPackageSearch',
+            (node) => new GoToPackageCommand(treeProvider).run()
         ),
         vscode.commands.registerCommand(
             'vscode-monorepo-tools.install',

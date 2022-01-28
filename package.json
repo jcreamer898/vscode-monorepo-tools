@@ -54,6 +54,10 @@
         },
         "commands": [
             {
+                "command": "vscode-monorepo-tools.goToPackageSearch",
+                "title": "Monorepo Tools: Go To Package"
+            },
+            {
                 "command": "vscode-monorepo-tools.loadPackages",
                 "title": "Monorepo Tools: Load Packages"
             },
@@ -187,6 +191,7 @@
         "mkdirp": "^1.0.4",
         "node-plop": "^0.26.2",
         "pkg-up": "^3.1.0",
-        "read-pkg-up": "^7.0.1"
+        "read-pkg-up": "^7.0.1",
+        "workspace-tools": "^0.16.2"
     }
 }

@@ -9,6 +9,7 @@ import {
 import { getPackages, Package } from '@manypkg/get-packages';
 import { findRoot } from '@manypkg/find-root';
 import { Dependency } from './dependency';
+// import { getWorkspaces } from 'workspace-tools';
 import { getDependentsGraph } from '@changesets/get-dependents-graph';
 import pkgUp from 'pkg-up';
 import * as path from 'path';
@@ -19,10 +20,12 @@ import { installScripts, packageRunScripts, rootRunScripts } from './scripts';
 type TreeChangeEvent = Dependency | undefined | null | void;
 
 export class MonorepoDependenciesProvider
-    implements TreeDataProvider<Dependency> {
-    private _onDidChangeTreeData: EventEmitter<TreeChangeEvent> = new EventEmitter<TreeChangeEvent>();
-    readonly onDidChangeTreeData: Event<TreeChangeEvent> = this
-        ._onDidChangeTreeData.event;
+    implements TreeDataProvider<Dependency>
+{
+    private _onDidChangeTreeData: EventEmitter<TreeChangeEvent> =
+        new EventEmitter<TreeChangeEvent>();
+    readonly onDidChangeTreeData: Event<TreeChangeEvent> =
+        this._onDidChangeTreeData.event;
 
     workspaceRoot: string;
     workspacePkgJson: Record<string, any>;
@@ -130,6 +133,8 @@ export class MonorepoDependenciesProvider
         }
 
         const packages = await getPackages(this.workspaceRoot);
+        // const workspaces = await getWorkspaces(this.workspaceRoot);
+        // TODO: finish the swap logic for workspace-tools
         const graph = await getDependentsGraph(packages);
 
         this.graph = graph;
