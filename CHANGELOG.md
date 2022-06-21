@@ -4,6 +4,10 @@ All notable changes to the "monorepo-tools" extension will be documented in this
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.3.0]
+
+-   Add a Go to Package feature command
+
 ## [0.2.0]
 
 -   Add a Search in Package context menu item.
