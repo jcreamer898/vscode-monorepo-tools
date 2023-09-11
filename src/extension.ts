@@ -11,18 +11,20 @@ import { NewPackageCommand } from './commands/newPackage';
 import { AddDependencyCommand } from './commands/addDependency';
 import { SearchInPackageCommand } from './commands/searchInPackage';
 import { GoToPackageCommand } from './commands/goToPackage';
+import { MonorepoChangedPackagesProvider } from './changedPackageProvider';
 
 const pkgUp = require('pkg-up');
 
 let statusBarItem: vscode.StatusBarItem;
 let treeProvider: MonorepoDependenciesProvider;
+let changedPackagesProvider: MonorepoChangedPackagesProvider;
 let treeView: vscode.TreeView<Dependency>;
+let changedPackagesView: vscode.TreeView<Dependency>;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate({ subscriptions }: vscode.ExtensionContext) {
     const folders = vscode.workspace.workspaceFolders;
-    console.log('activate');
 
     if (!folders?.length) {
         return;
@@ -32,9 +34,15 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     const pkg = await pkgUp({ cwd: cwd });
 
     treeProvider = new MonorepoDependenciesProvider(cwd, pkg);
+    changedPackagesProvider = new MonorepoChangedPackagesProvider(cwd, pkg);
     treeView = vscode.window.createTreeView('monorepoDependencies', {
         treeDataProvider: treeProvider,
     });
+
+    changedPackagesView = vscode.window.createTreeView('changedPackages', {
+        treeDataProvider: treeProvider,
+    });
+
     const loadPackagesCommand = 'vscode-monorepo-tools.loadPackages';
 
     statusBarItem = vscode.window.createStatusBarItem(
@@ -45,7 +53,8 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     const editorChange = new ChangeTextEditorEvent(
         treeProvider,
         treeView,
-        statusBarItem
+        statusBarItem,
+        changedPackagesView
     );
     subscriptions.push(
         vscode.commands.registerCommand(loadPackagesCommand, async () => {

@@ -20,7 +20,7 @@ import { installScripts, packageRunScripts, rootRunScripts } from './scripts';
 
 type TreeChangeEvent = Dependency | undefined | null | void;
 
-export class MonorepoDependenciesProvider
+export class MonorepoChangedPackagesProvider
     implements TreeDataProvider<Dependency>
 {
     private _onDidChangeTreeData: EventEmitter<TreeChangeEvent> =
@@ -126,7 +126,7 @@ export class MonorepoDependenciesProvider
      * @param force Forces the graph to refresh and not use cache
      * @returns
      */
-    async loadGraph(force = false) {
+    async loadGraph2(force = false) {
         if (!force && this.graph.size > 0) {
             return this.graph;
         }
@@ -160,7 +160,7 @@ export class MonorepoDependenciesProvider
         return graph;
     }
 
-    async getChangedWorkspaces() {
+    async loadGraph(force = false) {
         const changes = await getChangedPackagesSinceRef({
             cwd: this.workspaceRoot,
             ref: 'main',
@@ -179,6 +179,8 @@ export class MonorepoDependenciesProvider
                 )
             );
         }
+
+        return this.changedPackages;
     }
 
     async refreshGraph() {

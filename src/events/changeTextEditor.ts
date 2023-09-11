@@ -5,16 +5,19 @@ import { MonorepoDependenciesProvider } from '../dependencyProvider';
 export class ChangeTextEditorEvent {
     treeProvider: MonorepoDependenciesProvider;
     treeView: vscode.TreeView<Dependency>;
+    changedPackagesView: vscode.TreeView<Dependency>;
     statusBarItem: vscode.StatusBarItem;
 
     constructor(
         treeProvider: MonorepoDependenciesProvider,
         treeView: vscode.TreeView<Dependency>,
-        statusBarItem: vscode.StatusBarItem
+        statusBarItem: vscode.StatusBarItem,
+        changedPackagesView: vscode.TreeView<Dependency>
     ) {
         this.treeProvider = treeProvider;
         this.treeView = treeView;
         this.statusBarItem = statusBarItem;
+        this.changedPackagesView = changedPackagesView;
     }
 
     async run() {

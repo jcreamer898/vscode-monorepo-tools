@@ -95,7 +95,14 @@
                 {
                     "id": "monorepoDependencies",
                     "name": "Monorepo Dependencies",
-                    "icon": "media/dep.svg"
+                    "icon": "media/dep.svg",
+                    "visibility": "collapsed"
+                },
+                {
+                    "id": "changedPackages",
+                    "name": "Packages with Changes",
+                    "icon": "media/white-trees.png",
+                    "visibility": "collapsed"
                 }
             ]
         },
@@ -184,6 +191,7 @@
     },
     "dependencies": {
         "@changesets/get-dependents-graph": "^1.2.0",
+        "@changesets/git": "^2.0.0",
         "@manypkg/find-root": "^1.1.0",
         "@manypkg/get-packages": "^1.1.1",
         "@types/mkdirp": "^1.0.1",
@@ -192,6 +200,6 @@
         "node-plop": "^0.26.2",
         "pkg-up": "^3.1.0",
         "read-pkg-up": "^7.0.1",
-        "workspace-tools": "^0.16.2"
+        "workspace-tools": "^0.35.2"
     }
 }
