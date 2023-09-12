@@ -12,8 +12,9 @@ import { Dependency } from './dependency';
 import {
     PackageInfo,
     getChangedPackages,
-    getWorkspaces,
+    getPackageInfos,
 } from 'workspace-tools';
+import { PackageInfos } from 'beachball/lib/types/PackageInfo';
 import { getWorkspaceManagerAndRoot } from 'workspace-tools/lib/workspaces/implementations';
 // import { getDependentsGraph } from '@changesets/get-dependents-graph';
 import { getChangedPackagesSinceRef } from '@changesets/git';
@@ -22,6 +23,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { readJson } from './readJson';
 import { installScripts, packageRunScripts, rootRunScripts } from './scripts';
+import { checkChangeFiles } from './beachball';
 
 type TreeChangeEvent = Dependency | undefined | null | void;
 
@@ -47,6 +49,8 @@ export class MonorepoChangedPackagesProvider
      * Map of packages in workspaceRoot
      */
     packages: Map<string, Dependency> = new Map();
+
+    packageInfos!: PackageInfos;
 
     changedPackages: Map<string, Dependency> = new Map();
 
@@ -125,16 +129,21 @@ export class MonorepoChangedPackagesProvider
     async loadGraph(force = false) {
         const changes = getChangedPackages(this.workspaceRoot, 'main');
         const tool = getWorkspaceManagerAndRoot(this.workspaceRoot)?.manager;
-        const workspaces = getWorkspaces(this.workspaceRoot);
+        const workspaces = getPackageInfos(this.workspaceRoot);
 
+        for (let [, ws] of Object.entries(workspaces)) {
+            ws.combinedOptions = ws.combinedOptions || {};
+        }
+
+        this.packageInfos = workspaces as PackageInfos;
         this.packages = new Map();
 
-        for (let workspace of workspaces) {
+        for (let [, workspace] of Object.entries(workspaces)) {
             this.packages.set(
                 workspace.name,
                 new Dependency(
                     {
-                        ...workspace.packageJson,
+                        ...workspace,
                         tool,
                         children: new Set(),
                     },
@@ -194,6 +203,31 @@ export class MonorepoChangedPackagesProvider
 
             const pkgName = readJson(packageForFilename).name;
             this.activePackage = this.packages.get(pkgName) as Dependency;
+            console.log({ rootPackageDir });
+
+            const needsChanges = await checkChangeFiles({
+                branch: 'main',
+                workingDirectory: rootPackageDir,
+                packageInfos: this.packageInfos,
+            });
+
+            if (needsChanges.length) {
+                window
+                    .showWarningMessage(
+                        `Changes needed in the following packages:`,
+                        ...needsChanges
+                    )
+                    .then((pkg) => {
+                        const terminal =
+                            window.terminals.find(
+                                (t) => t.name === `Beachball`
+                            ) || window.createTerminal(`Beachball`);
+
+                        terminal.show();
+                        terminal.sendText(`yarn beachball change`);
+                    });
+            }
+
             this.refresh();
         } catch (e) {
             console.error(`Problem loading graph: ${e}`);

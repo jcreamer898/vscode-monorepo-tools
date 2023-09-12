@@ -201,6 +201,7 @@
         "@manypkg/find-root": "^1.1.0",
         "@manypkg/get-packages": "^1.1.1",
         "@types/mkdirp": "^1.0.1",
+        "beachball": "^2.37.0",
         "handlebars": "^4.7.7",
         "mkdirp": "^1.0.4",
         "node-plop": "^0.26.2",
