@@ -13,7 +13,7 @@ export class RunScriptCommand {
     }
 
     async run(node: Dependency) {
-        const filePath = path.join(node.pkg.dir, 'package.json');
+        const filePath = path.join(node.pkg.packageJsonPath);
         const json = readJson(filePath);
         const scripts = json.scripts || {};
         const scriptNames = Object.keys(scripts);

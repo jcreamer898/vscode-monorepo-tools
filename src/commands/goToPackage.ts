@@ -13,7 +13,7 @@ export class GoToPackageCommand {
     }
 
     async run() {
-        const deps = Array.from(this.treeProvider.graph.keys());
+        const deps = Array.from(this.treeProvider.packages.keys());
 
         if (!deps) {
             return;
@@ -36,7 +36,8 @@ export class GoToPackageCommand {
             return;
         }
 
-        const filePath = path.join(item?.pkg.dir, 'package.json');
+        console.log(item.pkg.packageJsonPath);
+        const filePath = path.join(item.pkg.packageJsonPath);
         const uri = vscode.Uri.file(filePath);
 
         vscode.workspace.openTextDocument(uri).then((doc) => {

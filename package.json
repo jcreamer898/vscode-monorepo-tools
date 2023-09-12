@@ -106,6 +106,12 @@
                 }
             ]
         },
+        "viewsWelcome": [
+            {
+                "view": "changedPackages",
+                "contents": "No changed packages found."
+            }
+        ],
         "viewsContainers": {
             "activitybar": [
                 {
@@ -182,12 +188,12 @@
         "eslint": "^7.19.0",
         "glob": "^7.1.6",
         "mocha": "^8.2.1",
-        "ts-loader": "^8.0.14",
+        "ts-loader": "^9.4.4",
         "typescript": "^4.1.3",
         "vsce": "^1.87.0",
         "vscode-test": "^1.5.0",
-        "webpack": "^5.19.0",
-        "webpack-cli": "^4.4.0"
+        "webpack": "^5.88.2",
+        "webpack-cli": "^5.1.4"
     },
     "dependencies": {
         "@changesets/get-dependents-graph": "^1.2.0",

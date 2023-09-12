@@ -9,8 +9,13 @@ import {
 import { getPackages, Package } from '@manypkg/get-packages';
 import { findRoot } from '@manypkg/find-root';
 import { Dependency } from './dependency';
-// import { getWorkspaces } from 'workspace-tools';
-import { getDependentsGraph } from '@changesets/get-dependents-graph';
+import {
+    PackageInfo,
+    getChangedPackages,
+    getWorkspaces,
+} from 'workspace-tools';
+import { getWorkspaceManagerAndRoot } from 'workspace-tools/lib/workspaces/implementations';
+// import { getDependentsGraph } from '@changesets/get-dependents-graph';
 import { getChangedPackagesSinceRef } from '@changesets/git';
 import pkgUp from 'pkg-up';
 import * as path from 'path';
@@ -29,7 +34,7 @@ export class MonorepoChangedPackagesProvider
         this._onDidChangeTreeData.event;
 
     workspaceRoot: string;
-    workspacePkgJson: Record<string, any>;
+    workspacePkgJson: PackageInfo;
     workspaceTool!: string;
     rootPkg!: Dependency;
 
@@ -74,37 +79,33 @@ export class MonorepoChangedPackagesProvider
      * @returns
      */
     async getChildren(element: Dependency): Promise<Dependency[]> {
-        const graph = await this.loadGraph();
+        await this.loadGraph();
+        const changes = this.changedPackages;
 
-        // Return the top level tree
-        if (!element && graph) {
-            const root = this.getRoot();
-            return root ? [root] : [];
+        if (!changes.size) {
+            return [];
         }
 
-        if (element.root) {
-            return Array.from(this.packages.values());
+        let children = [];
+        for (let [name, dependency] of changes.entries()) {
+            children.push(dependency);
         }
-
-        if (element.pkg.children) {
-            return element.pkg.children?.map((name: string) => {
-                const dep = this.packages.get(name) as Dependency;
-
-                if (dep.pkg.children?.includes(element.pkg.packageJson.name)) {
-                    window.showInformationMessage(
-                        `Circular dependency: ${element.pkg.packageJson.name} -> ${dep.pkg.packageJson.name}`
-                    );
-                }
-
-                return dep;
-            });
-        }
-
-        return [];
+        return children;
     }
 
     getRoot() {
-        return this.rootPkg;
+        return (
+            this.rootPkg ||
+            new Dependency(
+                {
+                    ...this.workspacePkgJson,
+                    path: this.workspaceRoot,
+                    tool: 'unknown',
+                },
+                TreeItemCollapsibleState.Expanded,
+                true
+            )
+        );
     }
 
     getParent(element: Dependency) {
@@ -121,63 +122,36 @@ export class MonorepoChangedPackagesProvider
         return pkg;
     }
 
-    /**
-     * Load a cached graph or create a new one
-     * @param force Forces the graph to refresh and not use cache
-     * @returns
-     */
-    async loadGraph2(force = false) {
-        if (!force && this.graph.size > 0) {
-            return this.graph;
-        }
-
-        if (!this.workspacePkgJson) {
-            return new Map<string, string[]>();
-        }
-
-        const packages = await getPackages(this.workspaceRoot);
-        // const workspaces = await getWorkspaces(this.workspaceRoot);
-        // TODO: finish the swap logic for workspace-tools
-        const graph = await getDependentsGraph(packages);
-
-        this.graph = graph;
-        this.workspaceTool = packages.tool;
-
-        packages.packages.forEach((pkg) => {
-            const deps = graph.get(pkg.packageJson.name);
-
-            this.packages.set(
-                pkg.packageJson.name,
-                new Dependency(
-                    { ...pkg, tool: this.workspaceTool, children: deps },
-                    deps?.length
-                        ? TreeItemCollapsibleState.Collapsed
-                        : TreeItemCollapsibleState.None
-                )
-            );
-        });
-
-        return graph;
-    }
-
     async loadGraph(force = false) {
-        const changes = await getChangedPackagesSinceRef({
-            cwd: this.workspaceRoot,
-            ref: 'main',
-        });
+        const changes = getChangedPackages(this.workspaceRoot, 'main');
+        const tool = getWorkspaceManagerAndRoot(this.workspaceRoot)?.manager;
+        const workspaces = getWorkspaces(this.workspaceRoot);
 
-        for (let change of changes) {
-            this.changedPackages.set(
-                change.packageJson.name,
+        this.packages = new Map();
+
+        for (let workspace of workspaces) {
+            this.packages.set(
+                workspace.name,
                 new Dependency(
                     {
-                        ...change,
-                        tool: this.workspaceTool,
-                        children: [],
+                        ...workspace.packageJson,
+                        tool,
+                        children: new Set(),
                     },
-                    TreeItemCollapsibleState.None
+                    TreeItemCollapsibleState.Collapsed
                 )
             );
+        }
+        console.log({ changes });
+
+        for (let change of changes) {
+            const pkg = this.packages.get(change);
+
+            if (!pkg) {
+                continue;
+            }
+
+            this.changedPackages.set(pkg?.pkg.name as string, pkg);
         }
 
         return this.changedPackages;
@@ -210,8 +184,7 @@ export class MonorepoChangedPackagesProvider
 
             this.rootPkg = new Dependency(
                 {
-                    packageJson: this
-                        .workspacePkgJson as Package['packageJson'],
+                    ...this.workspacePkgJson,
                     dir: this.workspaceRoot,
                     tool: this.workspaceTool,
                 },
@@ -223,7 +196,7 @@ export class MonorepoChangedPackagesProvider
             this.activePackage = this.packages.get(pkgName) as Dependency;
             this.refresh();
         } catch (e) {
-            console.error(`Problem loading graph: ${e.message}`);
+            console.error(`Problem loading graph: ${e}`);
         }
     }
 

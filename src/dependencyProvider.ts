@@ -6,15 +6,17 @@ import {
     Event,
     window,
 } from 'vscode';
-import { getPackages, Package } from '@manypkg/get-packages';
 import { findRoot } from '@manypkg/find-root';
 import { Dependency } from './dependency';
-// import { getWorkspaces } from 'workspace-tools';
-import { getDependentsGraph } from '@changesets/get-dependents-graph';
-import { getChangedPackagesSinceRef } from '@changesets/git';
+import {
+    getPackageInfos,
+    createDependencyMap,
+    createPackageGraph,
+    PackageInfo,
+} from 'workspace-tools';
+import { getWorkspaceManagerAndRoot } from 'workspace-tools/lib/workspaces/implementations';
 import pkgUp from 'pkg-up';
 import * as path from 'path';
-import * as fs from 'fs';
 import { readJson } from './readJson';
 import { installScripts, packageRunScripts, rootRunScripts } from './scripts';
 
@@ -29,21 +31,19 @@ export class MonorepoDependenciesProvider
         this._onDidChangeTreeData.event;
 
     workspaceRoot: string;
-    workspacePkgJson: Record<string, any>;
+    workspacePkgJson: PackageInfo;
     workspaceTool!: string;
     rootPkg!: Dependency;
 
     /**
      * Dependency graph for a given workspace root
      */
-    graph: Map<string, string[]> = new Map<string, string[]>();
+    graph: Map<string, Set<string>> = new Map<string, Set<string>>();
 
     /**
      * Map of packages in workspaceRoot
      */
     packages: Map<string, Dependency> = new Map();
-
-    changedPackages: Map<string, Dependency> = new Map();
 
     activePackage!: Dependency;
 
@@ -87,12 +87,13 @@ export class MonorepoDependenciesProvider
         }
 
         if (element.pkg.children) {
-            return element.pkg.children?.map((name: string) => {
+            let keys = Array.from(element.pkg.children.keys());
+            return keys.map((name: string) => {
                 const dep = this.packages.get(name) as Dependency;
 
-                if (dep.pkg.children?.includes(element.pkg.packageJson.name)) {
+                if (keys.includes(element.pkg.name)) {
                     window.showInformationMessage(
-                        `Circular dependency: ${element.pkg.packageJson.name} -> ${dep.pkg.packageJson.name}`
+                        `Circular dependency: ${element.pkg.name} -> ${dep.pkg.name}`
                     );
                 }
 
@@ -132,25 +133,29 @@ export class MonorepoDependenciesProvider
         }
 
         if (!this.workspacePkgJson) {
-            return new Map<string, string[]>();
+            return new Map<string, Set<string>>();
         }
+        console.log({ root: this.workspaceRoot });
+        const packages = getPackageInfos(this.workspaceRoot);
+        console.log({ packages });
+        const tool = getWorkspaceManagerAndRoot(this.workspaceRoot)?.manager;
+        const graph = createDependencyMap(packages);
+        const actualGraph = createPackageGraph(packages);
+        console.log({ actualGraph });
 
-        const packages = await getPackages(this.workspaceRoot);
-        // const workspaces = await getWorkspaces(this.workspaceRoot);
-        // TODO: finish the swap logic for workspace-tools
-        const graph = await getDependentsGraph(packages);
+        this.graph = graph.dependencies;
+        console.log('load graph!');
+        console.log(graph);
+        this.workspaceTool = tool || 'unknown';
 
-        this.graph = graph;
-        this.workspaceTool = packages.tool;
-
-        packages.packages.forEach((pkg) => {
-            const deps = graph.get(pkg.packageJson.name);
+        Object.entries(packages).forEach(([, pkg]) => {
+            const deps = graph.dependencies.get(pkg.name);
 
             this.packages.set(
-                pkg.packageJson.name,
+                pkg.name,
                 new Dependency(
                     { ...pkg, tool: this.workspaceTool, children: deps },
-                    deps?.length
+                    deps?.size
                         ? TreeItemCollapsibleState.Collapsed
                         : TreeItemCollapsibleState.None
                 )
@@ -158,27 +163,6 @@ export class MonorepoDependenciesProvider
         });
 
         return graph;
-    }
-
-    async getChangedWorkspaces() {
-        const changes = await getChangedPackagesSinceRef({
-            cwd: this.workspaceRoot,
-            ref: 'main',
-        });
-
-        for (let change of changes) {
-            this.changedPackages.set(
-                change.packageJson.name,
-                new Dependency(
-                    {
-                        ...change,
-                        tool: this.workspaceTool,
-                        children: [],
-                    },
-                    TreeItemCollapsibleState.None
-                )
-            );
-        }
     }
 
     async refreshGraph() {
@@ -208,9 +192,8 @@ export class MonorepoDependenciesProvider
 
             this.rootPkg = new Dependency(
                 {
-                    packageJson: this
-                        .workspacePkgJson as Package['packageJson'],
-                    dir: this.workspaceRoot,
+                    ...this.workspacePkgJson,
+                    path: this.workspaceRoot,
                     tool: this.workspaceTool,
                 },
                 TreeItemCollapsibleState.Expanded,
@@ -221,7 +204,7 @@ export class MonorepoDependenciesProvider
             this.activePackage = this.packages.get(pkgName) as Dependency;
             this.refresh();
         } catch (e) {
-            console.error(`Problem loading graph: ${e.message}`);
+            console.error(`Problem loading graph: ${e}`);
         }
     }
 
@@ -229,7 +212,7 @@ export class MonorepoDependenciesProvider
      * Resets the current graph
      */
     clearGraph() {
-        this.graph = new Map<string, string[]>();
+        this.graph = new Map<string, Set<string>>();
         this.packages = new Map<string, Dependency>();
     }
 

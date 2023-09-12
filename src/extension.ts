@@ -40,7 +40,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     });
 
     changedPackagesView = vscode.window.createTreeView('changedPackages', {
-        treeDataProvider: treeProvider,
+        treeDataProvider: changedPackagesProvider,
     });
 
     const loadPackagesCommand = 'vscode-monorepo-tools.loadPackages';
@@ -54,7 +54,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         treeProvider,
         treeView,
         statusBarItem,
-        changedPackagesView
+        changedPackagesProvider
     );
     subscriptions.push(
         vscode.commands.registerCommand(loadPackagesCommand, async () => {
@@ -64,7 +64,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         vscode.commands.registerCommand(
             'vscode-monorepo-tools.goToPackage',
             (node: Dependency) => {
-                const filePath = path.join(node.pkg.dir, 'package.json');
+                const filePath = path.join(node.pkg.packageJsonPath);
                 const uri = vscode.Uri.file(filePath);
 
                 vscode.workspace.openTextDocument(uri).then((doc) => {
@@ -75,7 +75,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
         vscode.commands.registerCommand(
             'vscode-monorepo-tools.showPackage',
             (node: Dependency) => {
-                const filePath = path.join(node.pkg.dir, 'package.json');
+                const filePath = path.join(node.pkg.packageJsonPath);
                 const uri = vscode.Uri.file(filePath);
                 vscode.commands.executeCommand('revealInExplorer', uri);
             }
@@ -91,14 +91,16 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
             'vscode-monorepo-tools.goToPackageSearch',
             (node) => new GoToPackageCommand(treeProvider).run()
         ),
-        vscode.commands.registerCommand(
-            'vscode-monorepo-tools.install',
-            (node) => new InstallCommand(treeProvider).run(node)
-        ),
-        vscode.commands.registerCommand(
-            'vscode-monorepo-tools.addPackage',
-            (node) => new NewPackageCommand(treeProvider).run(node)
-        ),
+        // TODO: there is no reason for this I don't think
+        // vscode.commands.registerCommand(
+        //     'vscode-monorepo-tools.install',
+        //     (node) => new InstallCommand(treeProvider).run(node)
+        // ),
+        // TODO: make this more intuitive, right now it only adds things to /packages
+        // vscode.commands.registerCommand(
+        //     'vscode-monorepo-tools.addPackage',
+        //     (node) => new NewPackageCommand(treeProvider).run(node)
+        // ),
         vscode.commands.registerCommand(
             'vscode-monorepo-tools.addDependency',
             (node) => {

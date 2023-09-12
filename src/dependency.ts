@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Package } from '@manypkg/get-packages';
+import { PackageInfo } from 'workspace-tools';
 import * as path from 'path';
 
 const resourcePath = path.join(__filename, '..', '..', 'resources');
@@ -13,16 +13,16 @@ const icons: Record<string, string | vscode.ThemeIcon> = {
 };
 export class Dependency extends vscode.TreeItem {
     constructor(
-        public readonly pkg: Package & {
+        public readonly pkg: PackageInfo & {
             tool?: string;
-            children?: string[];
+            children?: Set<string>;
         },
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly root: boolean = false
     ) {
-        super(pkg.packageJson.name, collapsibleState);
+        super(pkg.name, collapsibleState);
         this.tooltip = `${this.label}`;
-        this.description = pkg.packageJson.version;
+        this.description = pkg.version;
         this.pkg = pkg;
         this.contextValue = root ? 'root' : 'dependency';
         this.iconPath = icons[this.pkg.tool as string] || icons.dark;
