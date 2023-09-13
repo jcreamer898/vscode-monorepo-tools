@@ -1,10 +1,10 @@
-import path from 'path';
-import fs from 'fs';
+import path from "path";
+import fs from "fs";
 
 export function readJson(filepath: string) {
-    try {
-        return JSON.parse(fs.readFileSync(path.resolve(filepath)).toString());
-    } catch (e) {
-        return null;
-    }
+  try {
+    return JSON.parse(fs.readFileSync(path.resolve(filepath)).toString());
+  } catch (e) {
+    return null;
+  }
 }

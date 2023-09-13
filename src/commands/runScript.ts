@@ -1,60 +1,60 @@
-import { Dependency } from '../dependency';
-import { readJson } from '../readJson';
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { MonorepoDependenciesProvider } from '../dependencyProvider';
-import { scriptRunner } from '../scripts';
+import { DependencyTreeItem } from "../dependency";
+import { readJson } from "../readJson";
+import * as vscode from "vscode";
+import * as path from "path";
+import { MonorepoDependenciesProvider } from "../dependencyProvider";
+import { scriptRunner } from "../scripts";
 
 export class RunScriptCommand {
-    treeProvider: MonorepoDependenciesProvider;
+  treeProvider: MonorepoDependenciesProvider;
 
-    constructor(treeProvider: MonorepoDependenciesProvider) {
-        this.treeProvider = treeProvider;
+  constructor(treeProvider: MonorepoDependenciesProvider) {
+    this.treeProvider = treeProvider;
+  }
+
+  async run(node: DependencyTreeItem) {
+    const filePath = path.join(node.workspace.packageJsonPath);
+    const json = readJson(filePath);
+    const scripts = json.scripts || {};
+    const scriptNames = Object.keys(scripts);
+
+    const selected = await vscode.window.showQuickPick([
+      {
+        label: "Custom",
+        description: "Run a custom script",
+      },
+      ...scriptNames.map((key: string) => ({
+        label: key,
+        description: scripts[key],
+      })),
+    ]);
+
+    if (!selected) {
+      return;
     }
 
-    async run(node: Dependency) {
-        const filePath = path.join(node.pkg.packageJsonPath);
-        const json = readJson(filePath);
-        const scripts = json.scripts || {};
-        const scriptNames = Object.keys(scripts);
+    let script = selected.label;
 
-        const selected = await vscode.window.showQuickPick([
-            {
-                label: 'Custom',
-                description: 'Run a custom script',
-            },
-            ...scriptNames.map((key: string) => ({
-                label: key,
-                description: scripts[key],
-            })),
-        ]);
-
-        if (!selected) {
-            return;
-        }
-
-        let script = selected.label;
-
-        if (selected.label === 'Custom') {
-            script = (await vscode.window.showInputBox()) || '';
-        }
-
-        if (!script) {
-            return;
-        }
-
-        const cmd = scriptRunner(this.treeProvider.workspaceTool, node, script);
-
-        if (!cmd) {
-            return;
-        }
-
-        const terminal =
-            vscode.window.terminals.find((t) => t.name === `Run Script`) ||
-            vscode.window.createTerminal(`Run Script`);
-
-        terminal.show();
-        terminal.sendText(`cd ${this.treeProvider.workspaceRoot}`);
-        terminal.sendText(cmd);
+    if (selected.label === "Custom") {
+      script = (await vscode.window.showInputBox()) || "";
     }
+
+    if (!script) {
+      return;
+    }
+
+    const cmd = scriptRunner(this.treeProvider.workspaceTool, node, script);
+
+    if (!cmd) {
+      return;
+    }
+
+    const terminal =
+      vscode.window.terminals.find((t) => t.name === `Run Script`) ||
+      vscode.window.createTerminal(`Run Script`);
+
+    terminal.show();
+    terminal.sendText(`cd ${this.treeProvider.workspaceRoot}`);
+    terminal.sendText(cmd);
+  }
 }
