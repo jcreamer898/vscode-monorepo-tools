@@ -217,7 +217,11 @@ export class MonorepoChangedPackagesProvider
                         `Changes needed in the following packages:`,
                         ...needsChanges
                     )
-                    .then((pkg) => {
+                    .then((...args) => {
+                        if (!args.some(Boolean)) {
+                            return;
+                        }
+
                         const terminal =
                             window.terminals.find(
                                 (t) => t.name === `Beachball`
