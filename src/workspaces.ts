@@ -1,7 +1,7 @@
 import {
   getPackageInfos,
   createDependencyMap,
-  getWorkspaceRoot,
+  getWorkspaceRoot as wsGetWorkspaceRoot,
   PackageInfo,
   PackageInfos,
 } from "workspace-tools";
@@ -11,8 +11,8 @@ const workspaceCache: Map<string, PackageInfos> = new Map();
 
 export type WorkspaceDependencyTree = Map<string, Set<string>>;
 
-export const getRootWorkspace = (root: string) => {
-  return getWorkspaceRoot(root);
+export const getWorkspaceRoot = (root: string) => {
+  return wsGetWorkspaceRoot(root);
 };
 
 /**

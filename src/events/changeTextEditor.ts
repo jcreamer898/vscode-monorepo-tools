@@ -28,7 +28,7 @@ export class ChangeTextEditorEvent {
       return;
     }
 
-    await this.treeProvider.loadGraphFromFile(filename);
+    await this.treeProvider.setActiveFile(filename);
     await this.changedPackagesProvider.loadGraphFromFile(filename);
 
     this.treeView.title = this.treeProvider.titleText();
