@@ -250,7 +250,8 @@
     "pretest": "npm run test-compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "deploy": "vsce publish --yarn"
+    "deploy": "vsce publish --yarn",
+    "build": "npm run compile"
   },
   "devDependencies": {
     "@types/glob": "^7.1.3",
