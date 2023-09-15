@@ -3,7 +3,7 @@ import { readJson } from "../readJson";
 import * as vscode from "vscode";
 import * as path from "path";
 import { MonorepoDependenciesProvider } from "../dependencyProvider";
-import { scriptRunner } from "../scripts";
+import { executeTerminalScript, scriptRunner } from "../scripts";
 
 export class RunScriptCommand {
   treeProvider: MonorepoDependenciesProvider;
@@ -12,8 +12,15 @@ export class RunScriptCommand {
     this.treeProvider = treeProvider;
   }
 
-  async run(node: DependencyTreeItem) {
-    const filePath = path.join(node.workspace.packageJsonPath);
+  async run(node?: DependencyTreeItem) {
+    let filePath;
+
+    if (!node) {
+      filePath = path.join(this.treeProvider.workspaceRoot, "package.json");
+      node = this.treeProvider.rootPkg;
+    }
+
+    filePath = path.join(node.workspace.packageJsonPath);
     const json = readJson(filePath);
     const scripts = json.scripts || {};
     const scriptNames = Object.keys(scripts);
@@ -49,12 +56,7 @@ export class RunScriptCommand {
       return;
     }
 
-    const terminal =
-      vscode.window.terminals.find((t) => t.name === `Run Script`) ||
-      vscode.window.createTerminal(`Run Script`);
-
-    terminal.show();
-    terminal.sendText(`cd ${this.treeProvider.workspaceRoot}`);
-    terminal.sendText(cmd);
+    executeTerminalScript(`cd ${this.treeProvider.workspaceRoot}`);
+    executeTerminalScript(cmd);
   }
 }

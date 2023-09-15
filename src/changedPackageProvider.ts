@@ -5,6 +5,7 @@ import {
   TreeItemCollapsibleState,
   Event,
   window,
+  workspace,
 } from "vscode";
 import { DependencyTreeItem } from "./dependency";
 import { PackageInfo, getChangedPackages } from "workspace-tools";
@@ -12,8 +13,8 @@ import { PackageInfos } from "beachball/lib/types/PackageInfo";
 import * as path from "path";
 import { checkChangeFiles } from "./beachball";
 import {
+  getWorkspaceChangedPackages,
   getWorkspaceRoot,
-  getWorkspaceTool,
   getWorkspaces,
 } from "./workspaces";
 
@@ -31,22 +32,6 @@ export class MonorepoChangedPackagesProvider
   workspacePkgJson: PackageInfo;
   workspaceTool!: string;
   rootPkg!: DependencyTreeItem;
-
-  /**
-   * Dependency graph for a given workspace root
-   */
-  graph: Map<string, string[]> = new Map<string, string[]>();
-
-  /**
-   * Map of packages in workspaceRoot
-   */
-  packages: Map<string, DependencyTreeItem> = new Map();
-
-  packageInfos!: PackageInfos;
-
-  changedPackages: Map<string, DependencyTreeItem> = new Map();
-
-  activePackage!: DependencyTreeItem;
 
   constructor(workspaceRoot: string, pkgJson: any) {
     this.workspaceRoot = workspaceRoot;
@@ -77,17 +62,17 @@ export class MonorepoChangedPackagesProvider
   async getChildren(
     element: DependencyTreeItem
   ): Promise<DependencyTreeItem[]> {
-    await this.loadChangedPackages();
-    const changes = this.changedPackages;
+    const changes = await this.loadChangedPackages();
 
     if (!changes.size) {
       return [];
     }
 
     let children = [];
-    for (let [name, dependency] of changes.entries()) {
+    for (let [, dependency] of changes.entries()) {
       children.push(dependency);
     }
+
     return children;
   }
 
@@ -114,15 +99,16 @@ export class MonorepoChangedPackagesProvider
     return null;
   }
 
-  async getFirst() {
-    await this.loadChangedPackages();
-    const [, pkg] = this.packages.entries().next().value;
-    return pkg;
-  }
-
   async loadChangedPackages() {
-    const tool = getWorkspaceTool(this.workspaceRoot);
+    const mainBranch =
+      workspace.getConfiguration("monorepoTools").get<string>("mainBranch") ||
+      "origin/main";
+
     const workspaces = getWorkspaces(this.workspaceRoot);
+    const changedPackages = await getWorkspaceChangedPackages(
+      this.workspaceRoot,
+      mainBranch
+    );
 
     // This is a hack because of a bug in beachball
     for (let [, ws] of Object.entries(workspaces)) {
@@ -130,7 +116,7 @@ export class MonorepoChangedPackagesProvider
     }
 
     const needsChanges = await checkChangeFiles({
-      branch: "main",
+      branch: mainBranch,
       workingDirectory: this.workspaceRoot,
       // TODO: align the beachball and workspace-tools types
       packageInfos: workspaces as PackageInfos,
@@ -148,34 +134,37 @@ export class MonorepoChangedPackagesProvider
           }
 
           const terminal =
-            window.terminals.find((t) => t.name === `Beachball`) ||
-            window.createTerminal(`Beachball`);
+            window.terminals.find((t) => t.name === `Change Files`) ||
+            window.createTerminal(`Change Files`);
 
           terminal.show();
-          terminal.sendText(`yarn beachball change`);
+          terminal.sendText(`yarn change`);
         });
     }
 
-    for (let change of needsChanges) {
+    const changedPackagesMap = new Map<string, DependencyTreeItem>();
+    for (let change of changedPackages) {
       const pkg = workspaces[change];
 
       if (!pkg) {
         continue;
       }
 
-      this.changedPackages.set(
+      const needsChangeFile = needsChanges.includes(change);
+
+      changedPackagesMap.set(
         pkg?.name as string,
         new DependencyTreeItem(
           {
             ...pkg,
-            tool,
+            tool: needsChangeFile ? "error" : "check",
           },
           TreeItemCollapsibleState.None
         )
       );
     }
 
-    return this.changedPackages;
+    return changedPackagesMap;
   }
 
   async refreshGraph() {
@@ -199,12 +188,6 @@ export class MonorepoChangedPackagesProvider
     } catch (e) {
       console.error(`Problem loading graph: ${e}`);
     }
-  }
-
-  statusText() {
-    return this.workspacePkgJson
-      ? `Workspace: ${this.workspacePkgJson.name}, ${this.packages.size} packages`
-      : "Workspace: Loading...";
   }
 
   titleText() {

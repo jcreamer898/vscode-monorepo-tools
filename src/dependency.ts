@@ -10,6 +10,8 @@ const icons: Record<string, string | vscode.ThemeIcon> = {
   dark: path.join(resourcePath, "dependency_light.svg"),
   lerna: path.join(resourcePath, "lerna.svg"),
   bolt: new vscode.ThemeIcon("zap"),
+  check: new vscode.ThemeIcon("check"),
+  error: new vscode.ThemeIcon("error"),
 };
 
 export type MonorepoWorkspace = PackageInfo & {
@@ -38,7 +40,7 @@ export class DependencyTreeItem extends vscode.TreeItem {
   /**
    * Root or dependency
    */
-  contextValue?: "root" | "dependency";
+  contextValue?: "root" | "dependency" | "repository";
   /**
    * Icon for this item
    */

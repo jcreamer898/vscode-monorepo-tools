@@ -2,9 +2,10 @@ import {
   getPackageInfos,
   createDependencyMap,
   getWorkspaceRoot as wsGetWorkspaceRoot,
-  PackageInfo,
   PackageInfos,
+  getChangedPackages,
 } from "workspace-tools";
+import fs from "fs";
 import { getWorkspaceManagerAndRoot } from "workspace-tools/lib/workspaces/implementations";
 
 const workspaceCache: Map<string, PackageInfos> = new Map();
@@ -25,6 +26,7 @@ export const getWorkspaces = (root: string) => {
 
   if (!workspaceCache.has(root)) {
     workspaces = getPackageInfos(root);
+    workspaceCache.set(root, workspaces);
   } else {
     workspaces = workspaceCache.get(root)!;
   }
@@ -56,4 +58,22 @@ export const getDependencyTree = (workspaces: PackageInfos) => {
   });
 
   return packageGraph;
+};
+
+export const getWorkspaceChangedPackages = async (
+  root: string,
+  branch = "main"
+) => {
+  const rootFiles = fs.readdirSync(root);
+  /**
+   * Get changed packages here will return the packages that have changed
+   * Keep in mind that if you have a file that doesn't match the ignored stuff, it will
+   * tell you that the whole repo changed!
+   */
+  const changes = getChangedPackages(root, branch, [
+    ...rootFiles.filter((file) => file !== "package.json"),
+    "**/.vscode/**",
+    "**/change/**",
+  ]);
+  return changes;
 };

@@ -1,12 +1,5 @@
-import { DependencyTreeItem } from "../dependency";
-import { readJson } from "../readJson";
-import * as vscode from "vscode";
-import * as path from "path";
 import { MonorepoDependenciesProvider } from "../dependencyProvider";
-import fs from "fs";
-import mkdirp from "mkdirp";
-import Handlebars from "handlebars";
-import { EventEmitter } from "events";
+import { executeTerminalScript, scriptRunner } from "../scripts";
 
 export class NewPackageCommand {
   treeProvider: MonorepoDependenciesProvider;
@@ -15,52 +8,24 @@ export class NewPackageCommand {
     this.treeProvider = treeProvider;
   }
 
-  async run(node: DependencyTreeItem) {
-    const name = await vscode.window.showInputBox({
-      value: "Package Name",
-    });
-    const destination = await vscode.window.showInputBox({
-      value: `${node.workspace.dir}/packages`,
-    });
-    const description = await vscode.window.showInputBox({
-      value: "Description of this new package",
-    });
-
-    if (!name || !destination) {
+  async run() {
+    const rootPkg = this.treeProvider.rootPkg;
+    // TODO: document that having a generate script is required
+    if (!rootPkg.workspace?.scripts?.generate) {
       return;
     }
 
-    const customTemplate = vscode.workspace
-      .getConfiguration("monorepoTools")
-      .get<string>("packageJsonTemplate");
+    const cmd = scriptRunner(
+      this.treeProvider.workspaceTool,
+      this.treeProvider.rootPkg,
+      rootPkg.workspace?.scripts?.generate
+    );
 
-    if (vscode.workspace.workspaceFolders && customTemplate) {
+    if (!cmd) {
+      return;
     }
 
-    const templatePath =
-      vscode.workspace.workspaceFolders && customTemplate
-        ? path.resolve(
-            vscode.workspace.workspaceFolders[0].uri.fsPath,
-            customTemplate
-          )
-        : path.join(__filename, "..", "..", "templates", "package.json.hbs");
-    const contents = await (
-      await fs.promises.readFile(templatePath)
-    ).toString();
-    const template = Handlebars.compile(contents);
-
-    const destClean = path.join(destination, name.replace(/\@[^/]+/, ""));
-    await mkdirp(destClean);
-    await mkdirp(path.join(destClean, "src"));
-    await fs.promises.writeFile(
-      path.join(destClean, "package.json"),
-      template({ name, description })
-    );
-    await fs.promises.writeFile(
-      path.join(destClean, "src", "index.ts"),
-      "// Generated from vscode-monorepo-tools. Have fun!"
-    );
-
-    await this.treeProvider.refreshGraph();
+    executeTerminalScript(`cd ${this.treeProvider.workspaceRoot}`);
+    executeTerminalScript(cmd);
   }
 }

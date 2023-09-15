@@ -1,212 +1,286 @@
 {
-    "name": "vscode-monorepo-tools",
-    "displayName": "vscode-monorepo-tools",
-    "description": "Tools for working in monorepos.",
-    "version": "0.3.0",
-    "publisher": "jcreamer",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/jcreamer898/vscode-monorepo-tools"
-    },
-    "keywords": [
-        "monorepo",
-        "tools",
-        "yarn",
-        "bolt",
-        "lerna",
-        "dependency tree"
-    ],
-    "icon": "media/white-trees.png",
-    "engines": {
-        "vscode": "^1.54.0"
-    },
-    "categories": [
-        "Other"
-    ],
-    "activationEvents": [
-        "*"
-    ],
-    "main": "./dist/extension.js",
-    "contributes": {
-        "configuration": {
-            "title": "Monorepo Tools",
-            "properties": {
-                "monorepoTools.yarnInstallCommand": {
-                    "type": "string",
-                    "default": "yarn",
-                    "description": "Command to run to customize how yarn installs. e.g. yarn --network-concurrency 40"
-                },
-                "monorepoTools.lernaInstallCommand": {
-                    "type": "string",
-                    "default": "lerna bootstrap",
-                    "description": "Command to run to customize how lerna installs"
-                },
-                "monorepoTools.boltInstallCommand": {
-                    "type": "string",
-                    "default": "bolt",
-                    "description": "Command to run to customize how bolt installs"
-                },
-                "monorepoTools.packageJsonTemplate": {
-                    "type": "string",
-                    "description": "Path to a custom package.json handlebars template"
-                }
-            }
+  "name": "vscode-monorepo-tools",
+  "displayName": "vscode-monorepo-tools",
+  "description": "Tools for working in monorepos.",
+  "version": "0.3.0",
+  "publisher": "jcreamer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jcreamer898/vscode-monorepo-tools"
+  },
+  "keywords": [
+    "monorepo",
+    "tools",
+    "yarn",
+    "bolt",
+    "lerna",
+    "dependency tree"
+  ],
+  "icon": "media/white-trees.png",
+  "engines": {
+    "vscode": "^1.54.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Monorepo Tools",
+      "properties": {
+        "monorepoTools.yarnInstallCommand": {
+          "type": "string",
+          "default": "yarn",
+          "description": "Command to run to customize how yarn installs. e.g. yarn --network-concurrency 40"
         },
-        "commands": [
-            {
-                "command": "vscode-monorepo-tools.goToPackageSearch",
-                "title": "Monorepo Tools: Go To Package"
-            },
-            {
-                "command": "vscode-monorepo-tools.loadPackages",
-                "title": "Monorepo Tools: Load Packages"
-            },
-            {
-                "command": "vscode-monorepo-tools.goToPackage",
-                "title": "Open package.json"
-            },
-            {
-                "command": "vscode-monorepo-tools.showPackage",
-                "title": "Show in explorer"
-            },
-            {
-                "command": "vscode-monorepo-tools.runPkgScript",
-                "title": "Run Script"
-            },
-            {
-                "command": "vscode-monorepo-tools.install",
-                "title": "Install"
-            },
-            {
-                "command": "vscode-monorepo-tools.addPackage",
-                "title": "Add Package"
-            },
-            {
-                "command": "vscode-monorepo-tools.addDependency",
-                "title": "Add Dependency"
-            },
-            {
-                "command": "vscode-monorepo-tools.searchInPackage",
-                "title": "Search In Package"
-            }
-        ],
-        "views": {
-            "monorepo-explorer": [
-                {
-                    "id": "monorepoDependencies",
-                    "name": "Monorepo Dependencies",
-                    "icon": "media/dep.svg",
-                    "visibility": "collapsed"
-                },
-                {
-                    "id": "changedPackages",
-                    "name": "Packages with Changes",
-                    "icon": "media/white-trees.png",
-                    "visibility": "collapsed"
-                }
-            ]
+        "monorepoTools.lernaInstallCommand": {
+          "type": "string",
+          "default": "lerna bootstrap",
+          "description": "Command to run to customize how lerna installs"
         },
-        "viewsWelcome": [
-            {
-                "view": "changedPackages",
-                "contents": "No changed packages found."
-            }
-        ],
-        "viewsContainers": {
-            "activitybar": [
-                {
-                    "id": "monorepo-explorer",
-                    "title": "Monorepo Explorer",
-                    "icon": "media/white-trees.png"
-                }
-            ]
+        "monorepoTools.boltInstallCommand": {
+          "type": "string",
+          "default": "bolt",
+          "description": "Command to run to customize how bolt installs"
         },
-        "menus": {
-            "view/item/context": [
-                {
-                    "command": "vscode-monorepo-tools.goToPackage",
-                    "when": "view == monorepoDependencies && viewItem == dependency"
-                },
-                {
-                    "command": "vscode-monorepo-tools.showPackage",
-                    "when": "view == monorepoDependencies && viewItem == dependency"
-                },
-                {
-                    "command": "vscode-monorepo-tools.runPkgScript",
-                    "when": "view == monorepoDependencies && viewItem == dependency"
-                },
-                {
-                    "command": "vscode-monorepo-tools.addDependency",
-                    "when": "view == monorepoDependencies && viewItem == dependency"
-                },
-                {
-                    "command": "vscode-monorepo-tools.searchInPackage",
-                    "when": "view == monorepoDependencies && viewItem == dependency"
-                },
-                {
-                    "command": "vscode-monorepo-tools.goToPackage",
-                    "when": "view == monorepoDependencies && viewItem == root"
-                },
-                {
-                    "command": "vscode-monorepo-tools.showPackage",
-                    "when": "view == monorepoDependencies && viewItem == root"
-                },
-                {
-                    "command": "vscode-monorepo-tools.runPkgScript",
-                    "when": "view == monorepoDependencies && viewItem == root"
-                },
-                {
-                    "command": "vscode-monorepo-tools.install",
-                    "when": "view == monorepoDependencies && viewItem == root"
-                },
-                {
-                    "command": "vscode-monorepo-tools.addPackage",
-                    "when": "view == monorepoDependencies && viewItem == root"
-                }
-            ]
+        "monorepoTools.packageJsonTemplate": {
+          "type": "string",
+          "description": "Path to a custom package.json handlebars template"
+        },
+        "monorepoTools.mainBranch": {
+          "type": "string",
+          "description": "The default branch to compare with or changed packages",
+          "default": "origin/main"
+        },
+        "monorepoTools.workspaceToolOverride": {
+          "type": "string",
+          "description": "Override the workspace tool. Useful if a repo happens to have a hybrid setup."
         }
+      }
     },
-    "scripts": {
-        "vscode:prepublish": "npm run package",
-        "compile": "webpack",
-        "watch": "webpack --watch",
-        "package": "webpack --mode production --devtool hidden-source-map",
-        "test-compile": "tsc -p ./",
-        "test-watch": "tsc -watch -p ./",
-        "pretest": "npm run test-compile && npm run lint",
-        "lint": "eslint src --ext ts",
-        "test": "node ./out/test/runTest.js",
-        "deploy": "vsce publish --yarn"
+    "commands": [
+      {
+        "command": "vscode-monorepo-tools.openFile",
+        "title": "Open File"
+      },
+      {
+        "command": "vscode-monorepo-tools.goToPackageSearch",
+        "title": "Monorepo Tools: Go To Package"
+      },
+      {
+        "command": "vscode-monorepo-tools.loadPackages",
+        "title": "Monorepo Tools: Load Packages"
+      },
+      {
+        "command": "vscode-monorepo-tools.goToPackage",
+        "title": "Open package.json"
+      },
+      {
+        "command": "vscode-monorepo-tools.showPackage",
+        "title": "Show in explorer"
+      },
+      {
+        "command": "vscode-monorepo-tools.runPkgScript",
+        "title": "Monorepo Tools: Run Script"
+      },
+      {
+        "command": "vscode-monorepo-tools.install",
+        "title": "Install"
+      },
+      {
+        "command": "vscode-monorepo-tools.addPackage",
+        "title": "Add Package"
+      },
+      {
+        "command": "vscode-monorepo-tools.addDependency",
+        "title": "Add Dependency"
+      },
+      {
+        "command": "vscode-monorepo-tools.searchInPackage",
+        "title": "Search In Package"
+      },
+      {
+        "command": "vscode-monorepo-tools.goToUrl",
+        "title": "Open Url"
+      },
+      {
+        "command": "vscode-monorepo-tools.goToRoot",
+        "title": "Go to Root",
+        "icon": {
+          "light": "resources/arrow-circle-right-light.svg",
+          "dark": "resources/arrow-circle-right-dark.svg"
+        }
+      },
+      {
+        "command": "vscode-monorepo-tools.addPackage",
+        "title": "Add Package",
+        "icon": {
+          "light": "resources/new-file-light.svg",
+          "dark": "resources/new-file-dark.svg"
+        }
+      },
+      {
+        "command": "vscode-monorepo-tools.runChange",
+        "title": "Add Change",
+        "icon": {
+          "light": "resources/request-changes-light.svg",
+          "dark": "resources/request-changes-dark.svg"
+        }
+      }
+    ],
+    "views": {
+      "monorepo-explorer": [
+        {
+          "id": "monorepoDetails",
+          "name": "Monorepo Details",
+          "icon": "media/dep.svg",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "monorepoDependencies",
+          "name": "Monorepo Dependencies",
+          "icon": "media/dep.svg",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "changedPackages",
+          "name": "Packages with Changes",
+          "icon": "media/white-trees.png",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "changeFiles",
+          "name": "Change Files",
+          "icon": "media/white-trees.png",
+          "visibility": "collapsed"
+        }
+      ]
     },
-    "devDependencies": {
-        "@types/glob": "^7.1.3",
-        "@types/mocha": "^8.0.4",
-        "@types/node": "^12.11.7",
-        "@types/vscode": "^1.54.0",
-        "@typescript-eslint/eslint-plugin": "^4.14.1",
-        "@typescript-eslint/parser": "^4.14.1",
-        "eslint": "^7.19.0",
-        "glob": "^7.1.6",
-        "mocha": "^8.2.1",
-        "ts-loader": "^9.4.4",
-        "typescript": "^4.1.3",
-        "vsce": "^1.87.0",
-        "vscode-test": "^1.5.0",
-        "webpack": "^5.88.2",
-        "webpack-cli": "^5.1.4"
+    "viewsWelcome": [
+      {
+        "view": "changedPackages",
+        "contents": "No changed packages found."
+      },
+      {
+        "view": "changeFiles",
+        "contents": "No new change files currently present."
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "monorepo-explorer",
+          "title": "Monorepo Explorer",
+          "icon": "media/white-trees.png"
+        }
+      ]
     },
-    "dependencies": {
-        "@changesets/get-dependents-graph": "^1.2.0",
-        "@changesets/git": "^2.0.0",
-        "@manypkg/find-root": "^1.1.0",
-        "@manypkg/get-packages": "^1.1.1",
-        "@types/mkdirp": "^1.0.1",
-        "beachball": "^2.37.0",
-        "handlebars": "^4.7.7",
-        "mkdirp": "^1.0.4",
-        "node-plop": "^0.26.2",
-        "pkg-up": "^3.1.0",
-        "read-pkg-up": "^7.0.1",
-        "workspace-tools": "^0.35.2"
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "vscode-monorepo-tools.goToPackage",
+          "when": "view == monorepoDependencies && viewItem == dependency"
+        },
+        {
+          "command": "vscode-monorepo-tools.showPackage",
+          "when": "view == monorepoDependencies && viewItem == dependency"
+        },
+        {
+          "command": "vscode-monorepo-tools.runPkgScript",
+          "when": "view == monorepoDependencies && viewItem == dependency"
+        },
+        {
+          "command": "vscode-monorepo-tools.addDependency",
+          "when": "view == monorepoDependencies && viewItem == dependency"
+        },
+        {
+          "command": "vscode-monorepo-tools.searchInPackage",
+          "when": "view == monorepoDependencies && viewItem == dependency"
+        },
+        {
+          "command": "vscode-monorepo-tools.goToPackage",
+          "when": "view == monorepoDependencies && viewItem == root"
+        },
+        {
+          "command": "vscode-monorepo-tools.showPackage",
+          "when": "view == monorepoDependencies && viewItem == root"
+        },
+        {
+          "command": "vscode-monorepo-tools.runPkgScript",
+          "when": "view == monorepoDependencies && viewItem == root"
+        },
+        {
+          "command": "vscode-monorepo-tools.install",
+          "when": "view == monorepoDependencies && viewItem == root"
+        },
+        {
+          "command": "vscode-monorepo-tools.addPackage",
+          "when": "view == monorepoDependencies && viewItem == root"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "vscode-monorepo-tools.goToRoot",
+          "when": "view == monorepoDetails",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-monorepo-tools.addPackage",
+          "when": "view == monorepoDependencies",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-monorepo-tools.runChange",
+          "when": "view == changedPackages",
+          "group": "navigation"
+        }
+      ]
     }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "test-compile": "tsc -p ./",
+    "test-watch": "tsc -watch -p ./",
+    "pretest": "npm run test-compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "deploy": "vsce publish --yarn"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.0.4",
+    "@types/node": "^12.11.7",
+    "@types/vscode": "^1.54.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
+    "eslint": "^7.19.0",
+    "glob": "^7.1.6",
+    "mocha": "^8.2.1",
+    "ts-loader": "^9.4.4",
+    "typescript": "^4.1.3",
+    "vsce": "^1.87.0",
+    "vscode-test": "^1.5.0",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@changesets/get-dependents-graph": "^1.2.0",
+    "@changesets/git": "^2.0.0",
+    "@manypkg/find-root": "^1.1.0",
+    "@manypkg/get-packages": "^1.1.1",
+    "@types/mkdirp": "^1.0.1",
+    "beachball": "^2.37.0",
+    "handlebars": "^4.7.7",
+    "mkdirp": "^1.0.4",
+    "node-plop": "^0.26.2",
+    "pkg-up": "^3.1.0",
+    "read-pkg-up": "^7.0.1",
+    "workspace-tools": "^0.35.2"
+  }
 }

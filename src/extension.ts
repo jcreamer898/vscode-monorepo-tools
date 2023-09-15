@@ -12,18 +12,28 @@ import { AddDependencyCommand } from "./commands/addDependency";
 import { SearchInPackageCommand } from "./commands/searchInPackage";
 import { GoToPackageCommand } from "./commands/goToPackage";
 import { MonorepoChangedPackagesProvider } from "./changedPackageProvider";
+import { MonorepoDetailsProvider } from "./providers/detailsProvider";
+import { ChangeFilesProvider } from "./providers/changeFilesProvider";
 
 const pkgUp = require("pkg-up");
 
 let statusBarItem: vscode.StatusBarItem;
 let treeProvider: MonorepoDependenciesProvider;
 let changedPackagesProvider: MonorepoChangedPackagesProvider;
-let treeView: vscode.TreeView<DependencyTreeItem>;
+let treeView: vscode.TreeView<DependencyTreeItem | vscode.TreeItem>;
 let changedPackagesView: vscode.TreeView<DependencyTreeItem>;
+let changeFilesView: vscode.TreeView<vscode.TreeItem>;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
+
+type CommandCallback = Parameters<typeof vscode.commands.registerCommand>[1];
+const register = (name: string, callback: CommandCallback) => {
+  return vscode.commands.registerCommand(name, callback);
+};
+
 export async function activate({ subscriptions }: vscode.ExtensionContext) {
+  // TODO: build forEachWorkspace into this thing
   const folders = vscode.workspace.workspaceFolders;
 
   if (!folders?.length) {
@@ -35,12 +45,22 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
 
   treeProvider = new MonorepoDependenciesProvider(cwd, pkg);
   changedPackagesProvider = new MonorepoChangedPackagesProvider(cwd, pkg);
+  const detailsProvider = new MonorepoDetailsProvider(cwd, pkg);
+  const changeFilesProvider = new ChangeFilesProvider(cwd, pkg);
   treeView = vscode.window.createTreeView("monorepoDependencies", {
     treeDataProvider: treeProvider,
   });
 
+  treeView = vscode.window.createTreeView("monorepoDetails", {
+    treeDataProvider: detailsProvider,
+  });
+
+  // TODO: only load this tree view when beachball is present
   changedPackagesView = vscode.window.createTreeView("changedPackages", {
     treeDataProvider: changedPackagesProvider,
+  });
+  changeFilesView = vscode.window.createTreeView("changeFiles", {
+    treeDataProvider: changeFilesProvider,
   });
 
   const loadPackagesCommand = "vscode-monorepo-tools.loadPackages";
@@ -54,65 +74,84 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     treeProvider,
     treeView,
     statusBarItem,
-    changedPackagesProvider
+    changedPackagesProvider,
+    detailsProvider
   );
-  subscriptions.push(
-    vscode.commands.registerCommand(loadPackagesCommand, async () => {
+
+  const commands: Record<string, CommandCallback> = {
+    [loadPackagesCommand]: async () => {
       const first = await treeProvider.getFirst();
       treeView.reveal(first);
-    }),
-    vscode.commands.registerCommand(
-      "vscode-monorepo-tools.goToPackage",
-      (node: DependencyTreeItem) => {
-        const filePath = path.join(node.workspace.packageJsonPath);
-        const uri = vscode.Uri.file(filePath);
+    },
+    "vscode-monorepo-tools.goToPackage": (node: DependencyTreeItem) => {
+      const filePath = path.join(node.workspace.packageJsonPath);
+      const uri = vscode.Uri.file(filePath);
 
-        vscode.workspace.openTextDocument(uri).then((doc) => {
-          vscode.window.showTextDocument(doc);
-        });
-      }
-    ),
-    vscode.commands.registerCommand(
-      "vscode-monorepo-tools.showPackage",
-      (node: DependencyTreeItem) => {
-        const filePath = path.join(node.workspace.packageJsonPath);
-        const uri = vscode.Uri.file(filePath);
+      vscode.workspace.openTextDocument(uri).then((doc) => {
+        vscode.window.showTextDocument(doc);
+      });
+    },
+    "vscode-monorepo-tools.showPackage": (node: DependencyTreeItem) => {
+      const filePath = path.join(node.workspace.packageJsonPath);
+      const uri = vscode.Uri.file(filePath);
+      vscode.commands.executeCommand("revealInExplorer", uri);
+    },
+    "vscode-monorepo-tools.runPkgScript": (node) =>
+      new RunScriptCommand(treeProvider).run(node),
+    "vscode-monorepo-tools.goToPackageSearch": (node) =>
+      new GoToPackageCommand(treeProvider).run(),
+    "vscode-monorepo-tools.addDependency": (node) => {
+      new AddDependencyCommand(treeProvider).run(node);
+    },
+    "vscode-monorepo-tools.searchInPackage": (node) => {
+      new SearchInPackageCommand(treeProvider).run(node);
+    },
+    "vscode-monorepo-tools.goToRoot": () => {
+      const filePath = path.join(treeProvider.workspaceRoot, "package.json");
+      const uri = vscode.Uri.file(filePath);
+      vscode.workspace.openTextDocument(uri).then((doc) => {
+        vscode.window.showTextDocument(doc);
+      });
+    },
+    "vscode-monorepo-tools.goToUrl": (url: string) => {
+      vscode.env.openExternal(vscode.Uri.parse(url));
+    },
+    "vscode-monorepo-tools.openFile": (url: string) => {
+      const uri = vscode.Uri.file(url);
+      vscode.workspace.openTextDocument(uri).then((doc) => {
+        vscode.window.showTextDocument(doc);
         vscode.commands.executeCommand("revealInExplorer", uri);
-      }
-    ),
+      });
+    },
+    "vscode-monorepo-tools.runChange": (url: string) => {
+      const terminal =
+        vscode.window.terminals.find((t) => t.name === `Change Files`) ||
+        vscode.window.createTerminal(`Change Files`);
+
+      terminal.show();
+      terminal.sendText(`cd ${cwd}`);
+      terminal.sendText(`yarn change`);
+    },
+  };
+
+  subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => editorChange.run()),
     treeView,
     statusBarItem,
-    vscode.commands.registerCommand(
-      "vscode-monorepo-tools.runPkgScript",
-      (node) => new RunScriptCommand(treeProvider).run(node)
+    ...Object.entries(commands).map(([name, callback]) =>
+      register(name, callback)
     ),
-    vscode.commands.registerCommand(
-      "vscode-monorepo-tools.goToPackageSearch",
-      (node) => new GoToPackageCommand(treeProvider).run()
-    ),
-    // TODO: there is no reason for this I don't think
-    // vscode.commands.registerCommand(
-    //     'vscode-monorepo-tools.install',
-    //     (node) => new InstallCommand(treeProvider).run(node)
-    // ),
-    // TODO: make this more intuitive, right now it only adds things to /packages
-    // vscode.commands.registerCommand(
-    //     'vscode-monorepo-tools.addPackage',
-    //     (node) => new NewPackageCommand(treeProvider).run(node)
-    // ),
-    vscode.commands.registerCommand(
-      "vscode-monorepo-tools.addDependency",
-      (node) => {
-        new AddDependencyCommand(treeProvider).run(node);
-      }
-    ),
-    vscode.commands.registerCommand(
-      "vscode-monorepo-tools.searchInPackage",
-      (node) => {
-        new SearchInPackageCommand(treeProvider).run(node);
-      }
-    )
+    changeFilesView
+  );
+
+  // TODO: there is no reason for this I don't think
+  // vscode.commands.registerCommand(
+  //     'vscode-monorepo-tools.install',
+  //     (node) => new InstallCommand(treeProvider).run(node)
+  // ),
+  // TODO: make this more intuitive, right now it only adds things to /packages
+  vscode.commands.registerCommand("vscode-monorepo-tools.addPackage", () =>
+    new NewPackageCommand(treeProvider).run()
   );
 
   statusBarItem.show();

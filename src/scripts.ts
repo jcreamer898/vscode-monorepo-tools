@@ -60,7 +60,7 @@ export const installScripts = (workspaceTool: string) => {
 export const rootRunScripts = (workspaceTool: string, script: string) => {
   switch (workspaceTool) {
     case "yarn":
-      return `yarn workspaces run ${script}`;
+      return `yarn run ${script}`;
     case "lerna":
       return `lerna run ${script}`;
     case "bolt":
@@ -103,4 +103,14 @@ export const addScripts = (
     default:
       return null;
   }
+};
+
+export const executeTerminalScript = (cmd: string) => {
+  const terminal =
+    vscode.window.terminals.find((t) => t.name === `Run Script`) ||
+    vscode.window.createTerminal(`Run Script`);
+
+  terminal.show();
+
+  terminal.sendText(cmd);
 };

@@ -4,6 +4,7 @@ import {
   TreeItem,
   TreeItemCollapsibleState,
   Event,
+  workspace,
   window,
 } from "vscode";
 import { DependencyTreeItem } from "./dependency";
@@ -75,6 +76,7 @@ export class MonorepoDependenciesProvider
     element: DependencyTreeItem
   ): Promise<DependencyTreeItem[]> {
     const { items } = await this.loadDependencyTree(this.workspaceRoot);
+    this.items = items;
 
     if (!element && !items.size) {
       return [];
@@ -82,7 +84,7 @@ export class MonorepoDependenciesProvider
 
     // Return the top level tree
     if (!element && items.size) {
-      const root = this.getRootItem();
+      const root = this.getRootItem(items);
       return root ? [root] : [];
     }
 
@@ -108,28 +110,33 @@ export class MonorepoDependenciesProvider
     return [];
   }
 
-  getRootItem() {
+  getRootItem(items: Map<string, DependencyTreeItem>) {
     const workspaceRoot = getWorkspaceRoot(this.workspaceRoot)!;
     const workspacePackage = readJson(path.join(workspaceRoot, "package.json"));
-    const tool = getWorkspaceTool(workspaceRoot);
+    const tool =
+      workspace
+        .getConfiguration("monorepoTools")
+        .get<string>("workspaceToolOverride") ||
+      getWorkspaceTool(workspaceRoot);
 
-    return new DependencyTreeItem(
+    this.workspaceTool = tool || "npm run";
+
+    const rootDependency = new DependencyTreeItem(
       {
         ...workspacePackage,
-        packageJsonPath: workspaceRoot!,
+        packageJsonPath: path.join(workspaceRoot, "package.json"),
         tool,
       },
       TreeItemCollapsibleState.Expanded,
       true
     );
-  }
 
-  getParent(element: DependencyTreeItem) {
-    if (!element) {
-      return this.getRootItem();
-    }
+    // This will show the number of packages in the workspace
+    rootDependency.description = `${items.size} packages`;
 
-    return null;
+    this.rootPkg = rootDependency;
+
+    return rootDependency;
   }
 
   async getFirst() {
@@ -144,7 +151,10 @@ export class MonorepoDependenciesProvider
   async loadDependencyTree(root: string) {
     const workspaces = getWorkspaces(root);
     const tree = getDependencyTree(workspaces);
-    const tool = getWorkspaceTool(root);
+    const tool =
+      workspace
+        .getConfiguration("monorepoTools")
+        .get<string>("workspaceToolOverride") || getWorkspaceTool(root);
 
     const items = new Map<string, DependencyTreeItem>();
     for (const [name, workspace] of Object.entries(workspaces)) {
@@ -187,9 +197,15 @@ export class MonorepoDependenciesProvider
     const activePackage = readJson(packageForFilename);
     const workspacePackage = readJson(path.join(workspaceRoot, "package.json"));
 
+    const oldWorkspace = this.workspaceRoot;
     this.workspaceRoot = workspaceRoot;
     this.workspacePkgJson = workspacePackage;
     this.activePackage = this.items.get(activePackage.name)!;
+
+    const shouldNotRefreshTree = workspaceRoot === oldWorkspace;
+    if (shouldNotRefreshTree) {
+      return;
+    }
 
     this.refresh();
   }
