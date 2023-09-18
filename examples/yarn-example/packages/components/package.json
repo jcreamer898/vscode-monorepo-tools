@@ -1,8 +1,7 @@
 {
     "name": "@demo/components",
     "version": "0.1.0",
-    "private": true,
-    "description": "Sample yarn workspace",
+    "description": "Sample yarn workspace!",
     "scripts": {
         "start": "echo 'running'",
         "lint": "echo 'lint'"

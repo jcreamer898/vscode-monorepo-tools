@@ -1,225 +1,236 @@
 import {
-    TreeDataProvider,
-    EventEmitter,
-    TreeItem,
-    TreeItemCollapsibleState,
-    Event,
-    window,
-} from 'vscode';
-import { getPackages, Package } from '@manypkg/get-packages';
-import { findRoot } from '@manypkg/find-root';
-import { Dependency } from './dependency';
-// import { getWorkspaces } from 'workspace-tools';
-import { getDependentsGraph } from '@changesets/get-dependents-graph';
-import pkgUp from 'pkg-up';
-import * as path from 'path';
-import * as fs from 'fs';
-import { readJson } from './readJson';
-import { installScripts, packageRunScripts, rootRunScripts } from './scripts';
+  TreeDataProvider,
+  EventEmitter,
+  TreeItem,
+  TreeItemCollapsibleState,
+  Event,
+  workspace,
+  window,
+} from "vscode";
+import { DependencyTreeItem } from "./dependency";
+import { PackageInfo } from "workspace-tools";
+import pkgUp from "pkg-up";
+import * as path from "path";
+import { readJson } from "./readJson";
+import {
+  getDependencyTree,
+  getWorkspaceRoot,
+  getWorkspaceTool,
+  getWorkspaces,
+} from "./workspaces";
 
-type TreeChangeEvent = Dependency | undefined | null | void;
+type TreeChangeEvent = DependencyTreeItem | undefined | null | void;
 
 export class MonorepoDependenciesProvider
-    implements TreeDataProvider<Dependency>
+  implements TreeDataProvider<DependencyTreeItem>
 {
-    private _onDidChangeTreeData: EventEmitter<TreeChangeEvent> =
-        new EventEmitter<TreeChangeEvent>();
-    readonly onDidChangeTreeData: Event<TreeChangeEvent> =
-        this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: EventEmitter<TreeChangeEvent> =
+    new EventEmitter<TreeChangeEvent>();
+  readonly onDidChangeTreeData: Event<TreeChangeEvent> =
+    this._onDidChangeTreeData.event;
 
-    workspaceRoot: string;
-    workspacePkgJson: Record<string, any>;
-    workspaceTool!: string;
-    rootPkg!: Dependency;
+  workspaceRoot: string;
+  workspacePkgJson: PackageInfo;
+  workspaceTool!: string;
+  rootPkg!: DependencyTreeItem;
 
-    /**
-     * Dependency graph for a given workspace root
-     */
-    graph: Map<string, string[]> = new Map<string, string[]>();
+  /**
+   * Dependency graph for a given workspace root
+   */
+  graph: Map<string, Set<string>> = new Map<string, Set<string>>();
 
-    /**
-     * Map of packages in workspaceRoot
-     */
-    packages: Map<string, Dependency> = new Map();
+  /**
+   * Map of packages in workspaceRoot
+   */
+  items: Map<string, DependencyTreeItem> = new Map();
 
-    activePackage!: Dependency;
+  activePackage!: DependencyTreeItem;
 
-    constructor(workspaceRoot: string, pkgJson: any) {
-        this.workspaceRoot = workspaceRoot;
-        this.workspacePkgJson = pkgJson;
+  constructor(workspaceRoot: string, pkgJson: any) {
+    this.workspaceRoot = workspaceRoot;
+    this.workspacePkgJson = pkgJson;
+  }
+
+  /**
+   * Forces the tree view to refresh
+   */
+  private refresh(): void {
+    this._onDidChangeTreeData.fire();
+  }
+
+  /**
+   * Get an inviditual tree item
+   * @param element
+   * @returns
+   */
+  getTreeItem(element: DependencyTreeItem): TreeItem {
+    return element;
+  }
+
+  /**
+   * Get a list of tree items, this fires for the top level and each element
+   * @param element
+   * @returns
+   */
+  async getChildren(
+    element: DependencyTreeItem
+  ): Promise<DependencyTreeItem[]> {
+    const { items } = await this.loadDependencyTree(this.workspaceRoot);
+
+    if (!element && !items.size) {
+      return [];
     }
 
-    /**
-     * Forces the tree view to refresh
-     */
-    private refresh(): void {
-        this._onDidChangeTreeData.fire();
+    // Return the top level tree
+    if (!element && items.size) {
+      const root = this.getRootItem(items);
+      return root ? [root] : [];
     }
 
-    /**
-     * Get an inviditual tree item
-     * @param element
-     * @returns
-     */
-    getTreeItem(element: Dependency): TreeItem {
-        return element;
+    if (element.root) {
+      return Array.from(items.values());
     }
 
-    /**
-     * Get a list of tree items, this fires for the top level and each element
-     * @param element
-     * @returns
-     */
-    async getChildren(element: Dependency): Promise<Dependency[]> {
-        const graph = await this.loadGraph();
+    if (element.workspace.children?.size) {
+      const keys = Array.from(element.workspace.children.keys());
+      return keys.map((name: string) => {
+        const dep = items.get(name) as DependencyTreeItem;
 
-        // Return the top level tree
-        if (!element && graph) {
-            const root = this.getRoot();
-            return root ? [root] : [];
+        if (keys.includes(element.workspace.name)) {
+          window.showInformationMessage(
+            `Circular dependency: ${element.workspace.name} -> ${dep.workspace.name}`
+          );
         }
 
-        if (element.root) {
-            return Array.from(this.packages.values());
-        }
-
-        if (element.pkg.children) {
-            return element.pkg.children?.map((name: string) => {
-                const dep = this.packages.get(name) as Dependency;
-
-                if (dep.pkg.children?.includes(element.pkg.packageJson.name)) {
-                    window.showInformationMessage(
-                        `Circular dependency: ${element.pkg.packageJson.name} -> ${dep.pkg.packageJson.name}`
-                    );
-                }
-
-                return dep;
-            });
-        }
-
-        return [];
+        return dep;
+      });
     }
 
-    getRoot() {
-        return this.rootPkg;
+    return [];
+  }
+
+  getRootItem(items: Map<string, DependencyTreeItem>) {
+    const workspaceRoot = getWorkspaceRoot(this.workspaceRoot)!;
+    const workspacePackage = readJson(path.join(workspaceRoot, "package.json"));
+    const tool =
+      workspace
+        .getConfiguration("monorepoTools")
+        .get<string>("workspaceToolOverride") ||
+      getWorkspaceTool(workspaceRoot);
+
+    this.workspaceTool = tool || "npm run";
+
+    const rootDependency = new DependencyTreeItem(
+      {
+        ...workspacePackage,
+        packageJsonPath: path.join(workspaceRoot, "package.json"),
+        tool,
+      },
+      TreeItemCollapsibleState.Expanded,
+      true
+    );
+
+    // This will show the number of packages in the workspace
+    rootDependency.description = `${items.size} packages`;
+
+    this.rootPkg = rootDependency;
+
+    return rootDependency;
+  }
+
+  async getFirst() {
+    const { items } = await this.loadDependencyTree(this.workspaceRoot);
+    const [, pkg] = items.entries().next().value;
+    return pkg;
+  }
+
+  /**
+   * Load a dependency tree for a given root package.json
+   */
+  async loadDependencyTree(root: string) {
+    const workspaces = getWorkspaces(root);
+    const tree = getDependencyTree(workspaces);
+    const tool =
+      workspace
+        .getConfiguration("monorepoTools")
+        .get<string>("workspaceToolOverride") || getWorkspaceTool(root);
+
+    const items = new Map<string, DependencyTreeItem>();
+    // TODO: maybe find a way to not save state like this
+    this.items = items;
+
+    for (const [name, workspace] of Object.entries(workspaces)) {
+      const children = tree.get(name) || new Set();
+      const workspaceInfo = {
+        ...workspace,
+        tool,
+        children,
+      };
+      const state = children.size
+        ? TreeItemCollapsibleState.Collapsed
+        : TreeItemCollapsibleState.None;
+
+      items.set(name, new DependencyTreeItem(workspaceInfo, state));
     }
 
-    getParent(element: Dependency) {
-        if (!element) {
-            return this.getRoot();
-        }
+    return {
+      workspaces,
+      tree,
+      tool,
+      items,
+    };
+  }
 
-        return null;
+  async refreshGraph() {
+    await this.loadDependencyTree(this.workspaceRoot);
+    this.refresh();
+  }
+
+  /**
+   * When the user changes the active file, we need to update the tree
+   * @param root
+   * @param pkgJson
+   */
+  async setActiveFile(filename: string) {
+    const cwd = path.dirname(filename);
+
+    const packageForFilename = (await pkgUp({ cwd })) as string;
+    const workspaceRoot = getWorkspaceRoot(cwd)!;
+    const activePackage = readJson(packageForFilename);
+    const workspacePackage = readJson(path.join(workspaceRoot, "package.json"));
+
+    const oldWorkspace = this.workspaceRoot;
+    this.workspaceRoot = workspaceRoot;
+    this.workspacePkgJson = workspacePackage;
+    this.activePackage = this.items.get(activePackage.name)!;
+
+    const shouldNotRefreshTree = workspaceRoot === oldWorkspace;
+    if (shouldNotRefreshTree) {
+      return;
     }
 
-    async getFirst() {
-        await this.loadGraph();
-        const [, pkg] = this.packages.entries().next().value;
-        return pkg;
+    this.refresh();
+  }
+
+  /**
+   * Resets the current graph
+   */
+  clearGraph() {
+    this.graph = new Map<string, Set<string>>();
+    this.items = new Map<string, DependencyTreeItem>();
+  }
+
+  statusText() {
+    return this.workspacePkgJson
+      ? `Workspace: ${this.workspacePkgJson.name}, ${this.items.size} packages`
+      : "Workspace: Loading...";
+  }
+
+  titleText() {
+    if (!this.workspacePkgJson) {
+      return "Workspace: Loading...";
     }
 
-    /**
-     * Load a cached graph or create a new one
-     * @param force Forces the graph to refresh and not use cache
-     * @returns
-     */
-    async loadGraph(force = false) {
-        if (!force && this.graph.size > 0) {
-            return this.graph;
-        }
-
-        if (!this.workspacePkgJson) {
-            return new Map<string, string[]>();
-        }
-
-        const packages = await getPackages(this.workspaceRoot);
-        // const workspaces = await getWorkspaces(this.workspaceRoot);
-        // TODO: finish the swap logic for workspace-tools
-        const graph = await getDependentsGraph(packages);
-
-        this.graph = graph;
-        this.workspaceTool = packages.tool;
-
-        packages.packages.forEach((pkg) => {
-            const deps = graph.get(pkg.packageJson.name);
-
-            this.packages.set(
-                pkg.packageJson.name,
-                new Dependency(
-                    { ...pkg, tool: this.workspaceTool, children: deps },
-                    deps?.length
-                        ? TreeItemCollapsibleState.Collapsed
-                        : TreeItemCollapsibleState.None
-                )
-            );
-        });
-
-        return graph;
-    }
-
-    async refreshGraph() {
-        await this.loadGraph(true);
-        this.refresh();
-    }
-
-    /**
-     * Load a new workspace root from which to establish a graph
-     * @param root
-     * @param pkgJson
-     */
-    async loadGraphFromFile(filename: string) {
-        try {
-            let cwd = path.dirname(filename);
-
-            const packageForFilename = (await pkgUp({ cwd })) as string;
-            const rootPackageDir = await findRoot(cwd);
-
-            this.workspaceRoot = rootPackageDir;
-            this.workspacePkgJson = readJson(
-                path.join(rootPackageDir, 'package.json')
-            );
-
-            this.clearGraph();
-            await this.loadGraph();
-
-            this.rootPkg = new Dependency(
-                {
-                    packageJson: this
-                        .workspacePkgJson as Package['packageJson'],
-                    dir: this.workspaceRoot,
-                    tool: this.workspaceTool,
-                },
-                TreeItemCollapsibleState.Expanded,
-                true
-            );
-
-            const pkgName = readJson(packageForFilename).name;
-            this.activePackage = this.packages.get(pkgName) as Dependency;
-            this.refresh();
-        } catch (e) {
-            console.error(`Problem loading graph: ${e.message}`);
-        }
-    }
-
-    /**
-     * Resets the current graph
-     */
-    clearGraph() {
-        this.graph = new Map<string, string[]>();
-        this.packages = new Map<string, Dependency>();
-    }
-
-    statusText() {
-        return this.workspacePkgJson
-            ? `Workspace: ${this.workspacePkgJson.name}, ${this.packages.size} packages`
-            : 'Workspace: Loading...';
-    }
-
-    titleText() {
-        if (!this.workspacePkgJson) {
-            return 'Workspace: Loading...';
-        }
-
-        return `${this.workspacePkgJson.name}`;
-    }
+    return "Dependency Graph";
+  }
 }
