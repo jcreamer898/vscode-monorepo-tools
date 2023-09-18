@@ -122,7 +122,12 @@ export class MonorepoChangedPackagesProvider
       packageInfos: workspaces as PackageInfos,
     });
 
-    if (needsChanges.length) {
+    if (
+      needsChanges.length &&
+      workspace
+        .getConfiguration("monorepoTools")
+        .get<boolean>("enableChangefileNotifications")
+    ) {
       window
         .showWarningMessage(
           `Changes needed in the following packages:`,

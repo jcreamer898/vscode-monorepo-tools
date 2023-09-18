@@ -30,7 +30,7 @@ export class ChangeFilesProvider implements TreeDataProvider<TreeItem> {
   /**
    * Forces the tree view to refresh
    */
-  private refresh(): void {
+  refresh(): void {
     this._onDidChangeTreeData.fire();
   }
 
@@ -83,9 +83,4 @@ export class ChangeFilesProvider implements TreeDataProvider<TreeItem> {
 
     return rootItem;
   }
-
-  /**
-   * Resets the current graph
-   */
-  clearGraph() {}
 }

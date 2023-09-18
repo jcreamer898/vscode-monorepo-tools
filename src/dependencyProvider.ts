@@ -76,7 +76,6 @@ export class MonorepoDependenciesProvider
     element: DependencyTreeItem
   ): Promise<DependencyTreeItem[]> {
     const { items } = await this.loadDependencyTree(this.workspaceRoot);
-    this.items = items;
 
     if (!element && !items.size) {
       return [];
@@ -140,8 +139,8 @@ export class MonorepoDependenciesProvider
   }
 
   async getFirst() {
-    await this.loadDependencyTree(this.workspaceRoot);
-    const [, pkg] = this.items.entries().next().value;
+    const { items } = await this.loadDependencyTree(this.workspaceRoot);
+    const [, pkg] = items.entries().next().value;
     return pkg;
   }
 
@@ -157,6 +156,9 @@ export class MonorepoDependenciesProvider
         .get<string>("workspaceToolOverride") || getWorkspaceTool(root);
 
     const items = new Map<string, DependencyTreeItem>();
+    // TODO: maybe find a way to not save state like this
+    this.items = items;
+
     for (const [name, workspace] of Object.entries(workspaces)) {
       const children = tree.get(name) || new Set();
       const workspaceInfo = {

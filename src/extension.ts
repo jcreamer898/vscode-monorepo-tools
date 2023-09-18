@@ -14,6 +14,7 @@ import { GoToPackageCommand } from "./commands/goToPackage";
 import { MonorepoChangedPackagesProvider } from "./changedPackageProvider";
 import { MonorepoDetailsProvider } from "./providers/detailsProvider";
 import { ChangeFilesProvider } from "./providers/changeFilesProvider";
+import { clearWorkspaceCache } from "./workspaces";
 
 const pkgUp = require("pkg-up");
 
@@ -75,11 +76,13 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     treeView,
     statusBarItem,
     changedPackagesProvider,
-    detailsProvider
+    detailsProvider,
+    changeFilesProvider
   );
 
   const commands: Record<string, CommandCallback> = {
     [loadPackagesCommand]: async () => {
+      clearWorkspaceCache();
       const first = await treeProvider.getFirst();
       treeView.reveal(first);
     },

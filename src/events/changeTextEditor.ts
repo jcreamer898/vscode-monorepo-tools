@@ -3,6 +3,7 @@ import { DependencyTreeItem } from "../dependency";
 import { MonorepoDependenciesProvider } from "../dependencyProvider";
 import { MonorepoChangedPackagesProvider } from "../changedPackageProvider";
 import { MonorepoDetailsProvider } from "../providers/detailsProvider";
+import { ChangeFilesProvider } from "../providers/changeFilesProvider";
 
 export class ChangeTextEditorEvent {
   treeProvider: MonorepoDependenciesProvider;
@@ -10,18 +11,21 @@ export class ChangeTextEditorEvent {
   changedPackagesProvider: MonorepoChangedPackagesProvider;
   statusBarItem: vscode.StatusBarItem;
   detailsProvider: MonorepoDetailsProvider;
+  changeFilesProvider: ChangeFilesProvider;
 
   constructor(
     treeProvider: MonorepoDependenciesProvider,
     treeView: vscode.TreeView<DependencyTreeItem | vscode.TreeItem>,
     statusBarItem: vscode.StatusBarItem,
     changedPackagesProvider: MonorepoChangedPackagesProvider,
-    detailsProvider: MonorepoDetailsProvider
+    detailsProvider: MonorepoDetailsProvider,
+    changeFilesProvider: ChangeFilesProvider
   ) {
     this.treeProvider = treeProvider;
     this.treeView = treeView;
     this.statusBarItem = statusBarItem;
     this.changedPackagesProvider = changedPackagesProvider;
+    this.changeFilesProvider = changeFilesProvider;
     this.detailsProvider = detailsProvider;
   }
 
@@ -42,5 +46,6 @@ export class ChangeTextEditorEvent {
     // TODO: sthis is bad, don't do this, move the workspace state to something else
     this.detailsProvider.workspaceRoot = this.treeProvider.workspaceRoot;
     this.detailsProvider.refresh();
+    this.changeFilesProvider.refresh();
   }
 }

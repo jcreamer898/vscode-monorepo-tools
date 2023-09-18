@@ -42,7 +42,9 @@ export const getWorkspaceTool = (root: string) => {
  * Might need to occasionally clear the cache
  */
 export const clearWorkspaceCache = () => {
-  workspaceCache.clear();
+  if (workspaceCache.size !== 0) {
+    workspaceCache.clear();
+  }
 };
 
 export const getDependencyTree = (workspaces: PackageInfos) => {

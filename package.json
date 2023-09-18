@@ -58,6 +58,11 @@
         "monorepoTools.workspaceToolOverride": {
           "type": "string",
           "description": "Override the workspace tool. Useful if a repo happens to have a hybrid setup."
+        },
+        "monorepoTools.enableChangefileNotifications": {
+          "type": "string",
+          "description": "Override the workspace tool. Useful if a repo happens to have a hybrid setup.",
+          "default": true
         }
       }
     },
