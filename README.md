@@ -7,11 +7,13 @@ Monorepo Tools is a VSCode extension that gives developers insight into their mo
 - Works with Yarn workspaces, Rush, Lerna, and PNPM via [worksspace-tools](https://github.com/microsoft/workspace-tools/)
 - Working example from [babel](https://github.com/babel/babel)
 
-![Markup 2021-03-29 at 11 29 29](https://user-images.githubusercontent.com/472487/112868897-3092b000-9082-11eb-987d-8eb3a8158718.png)
+![image](https://github.com/jcreamer898/vscode-monorepo-tools/assets/472487/07d29c96-d21d-4d8b-a43c-f72536ffa113)
+
 
 - Dependency Tree view
 
-![Screen Capture on 2021-03-25 at 13-41-11](https://user-images.githubusercontent.com/472487/112526451-f23e7d80-8d6f-11eb-8669-d5ca553b61c1.gif)
+![image](https://github.com/jcreamer898/vscode-monorepo-tools/assets/472487/f01c6619-cffc-4776-a11e-4ae6f1b7975b)
+
 
 - Status bar of monorepo name and number of packages
 
@@ -19,19 +21,23 @@ Monorepo Tools is a VSCode extension that gives developers insight into their mo
 
 - Supports running scripts
 
-![Screen Capture on 2021-03-25 at 12-08-12](https://user-images.githubusercontent.com/472487/112514011-e3050300-8d62-11eb-96fb-0666b3644a87.gif)
+![image](https://github.com/jcreamer898/vscode-monorepo-tools/assets/472487/1c99a958-1a6e-49e0-a59b-a836d050f2df)
 
-- Install dependencies for your workspace tool
-
-![Screen Capture on 2021-03-25 at 12-41-48](https://user-images.githubusercontent.com/472487/112518712-a2f44f00-8d67-11eb-88de-b8fc1c5d21e8.gif)
-
-- Add a new package
+- Add a new package will run a `"generate"` script from your root `package.json`.
 
 ![Screen Capture on 2021-03-26 at 11-50-06](https://user-images.githubusercontent.com/472487/112665856-7dc81500-8e29-11eb-86a1-c21edec0dc00.gif)
 
 - Add dependencies to a package
 
 ![Screen Capture on 2021-03-26 at 11-51-22](https://user-images.githubusercontent.com/472487/112666145-db5c6180-8e29-11eb-8950-87b1ba4a9c2a.gif)
+
+- See changed packages in your working directory
+
+![image](https://github.com/jcreamer898/vscode-monorepo-tools/assets/472487/4a4f7346-2542-4e51-ac4e-9e095d73048b)
+
+- Support for Beachball, checking for change files
+
+![image](https://github.com/jcreamer898/vscode-monorepo-tools/assets/472487/72c4c5fa-7dbb-4505-b533-9acfb0769491)
 
 ## Configuration
 
