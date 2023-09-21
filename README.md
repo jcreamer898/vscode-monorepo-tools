@@ -25,7 +25,11 @@ Monorepo Tools is a VSCode extension that gives developers insight into their mo
 
 - Add a new package will run a `"generate"` script from your root `package.json`.
 
-![Screen Capture on 2021-03-26 at 11-50-06](https://user-images.githubusercontent.com/472487/112665856-7dc81500-8e29-11eb-86a1-c21edec0dc00.gif)
+![image](https://github.com/jcreamer898/vscode-monorepo-tools/assets/472487/44675980-a8f7-4b60-ac08-7b3563ed2df6)
+
+- Go to monorepo packages
+
+![image](https://github.com/jcreamer898/vscode-monorepo-tools/assets/472487/95252c36-3500-4c7d-bb85-53e36e27db40)
 
 - Add dependencies to a package
 
