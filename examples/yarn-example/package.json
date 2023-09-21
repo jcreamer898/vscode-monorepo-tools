@@ -2,6 +2,11 @@
     "name": "yarn-example",
     "private": true,
     "description": "Sample yarn workspace",
+    "bugs": {
+      "url": "https://github.com/jcreamer898/vscode-monorepo-tools/issues"
+    },
+    "repository": "https://github.com/jcreamer898/vscode-monorepo-tools",
+    "homepage": "https://marketplace.visualstudio.com/items?itemName=jcreamer.vscode-monorepo-tools",
     "dependencies": {},
     "workspaces": {
         "packages": [

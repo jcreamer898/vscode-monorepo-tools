@@ -124,7 +124,7 @@
    * LTS schedule: https://nodejs.org/en/about/releases/
    * LTS versions: https://nodejs.org/en/download/releases/
    */
-  "nodeSupportedVersionRange": ">=12.13.0 <13.0.0 || >=14.15.0 <15.0.0",
+  "nodeSupportedVersionRange": ">=16",
 
   /**
    * Odd-numbered major versions of Node.js are experimental.  Even-numbered releases
@@ -389,6 +389,8 @@
    * 3. It's useful to have a centralized inventory of all projects and their important metadata.
    */
   "projects": [
+    { "packageName": "@demo/components", "projectFolder": "components" },
+    { "packageName": "@demo/utils", "projectFolder": "utils" }
     // {
     //   /**
     //    * The NPM package name of the project (must match package.json)

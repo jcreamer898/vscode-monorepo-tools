@@ -1,0 +1,10 @@
+{
+    "name": "@demo/utils",
+    "version": "0.1.0",
+    "description": "Sample yarn workspace!",
+    "scripts": {
+        "start": "echo 'running'",
+        "lint": "echo 'lint'"
+    },
+    "dependencies": {}
+}

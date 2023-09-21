@@ -1,0 +1,22 @@
+dependencies:
+  '@rush-temp/components': file:projects/components.tgz
+  '@rush-temp/utils': file:projects/utils.tgz
+lockfileVersion: 5.2
+packages:
+  file:projects/components.tgz:
+    dev: false
+    name: '@rush-temp/components'
+    resolution:
+      integrity: sha512-+4NvYcmfsSXARkB5eRAzAl6WGzQrRLKBo0wh+67+gW+7xZHax6Dh3yVT1GjkXZDJG4LhxE+Mkct+OiyQJYGXrQ==
+      tarball: file:projects/components.tgz
+    version: 0.0.0
+  file:projects/utils.tgz:
+    dev: false
+    name: '@rush-temp/utils'
+    resolution:
+      integrity: sha512-IHDrg0UYkJpL0wUJXjwrKF5Lqh9kn1577xNXiWjMLwFZpU4DCkr1K/D0DNBCIz27OWQtAQfmOEM+Z1OGvuilAg==
+      tarball: file:projects/utils.tgz
+    version: 0.0.0
+specifiers:
+  '@rush-temp/components': file:./projects/components.tgz
+  '@rush-temp/utils': file:./projects/utils.tgz

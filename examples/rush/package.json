@@ -1,0 +1,12 @@
+{
+  "name": "rush-demo",
+  "description": "Sample rush workspace",
+  "bugs": {
+    "url": "https://github.com/jcreamer898/vscode-monorepo-tools/issues"
+  },
+  "repository": "https://github.com/jcreamer898/vscode-monorepo-tools",
+  "homepage": "https://marketplace.visualstudio.com/items?itemName=jcreamer.vscode-monorepo-tools",
+  "dependencies": {
+    "@microsoft/rush": "^5.107.1"
+  }
+}

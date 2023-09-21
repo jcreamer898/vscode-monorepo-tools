@@ -8,6 +8,7 @@ const icons: Record<string, string | vscode.ThemeIcon> = {
   yarn: path.join(resourcePath, "yarn.svg"),
   light: path.join(resourcePath, "dependency_light.svg"),
   dark: path.join(resourcePath, "dependency_light.svg"),
+  pnpm: path.join(resourcePath, "pnpm.svg"),
   lerna: path.join(resourcePath, "lerna.svg"),
   bolt: new vscode.ThemeIcon("zap"),
   check: new vscode.ThemeIcon("check"),

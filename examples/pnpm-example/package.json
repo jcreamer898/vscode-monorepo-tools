@@ -1,13 +1,14 @@
 {
-    "name": "lerna-example",
+    "name": "pnpm-example",
     "private": true,
+    "description": "Sample pnpm workspace",
     "bugs": {
       "url": "https://github.com/jcreamer898/vscode-monorepo-tools/issues"
     },
     "repository": "https://github.com/jcreamer898/vscode-monorepo-tools",
     "homepage": "https://marketplace.visualstudio.com/items?itemName=jcreamer.vscode-monorepo-tools",
-    "description": "Sample lerna workspace",
+    "dependencies": {},
     "devDependencies": {
-        "lerna": "^4.0.0"
+      "beachball": "^2.37.0"
     }
 }
