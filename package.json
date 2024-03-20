@@ -145,6 +145,12 @@
           "visibility": "collapsed"
         },
         {
+          "id": "scoper",
+          "name": "Scoper",
+          "icon": "media/dep.svg",
+          "visibility": "collapsed"
+        },
+        {
           "id": "monorepoDependencies",
           "name": "Monorepo Dependencies",
           "icon": "media/dep.svg",

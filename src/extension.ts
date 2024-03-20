@@ -15,6 +15,7 @@ import { MonorepoChangedPackagesProvider } from "./changedPackageProvider";
 import { MonorepoDetailsProvider } from "./providers/detailsProvider";
 import { ChangeFilesProvider } from "./providers/changeFilesProvider";
 import { clearWorkspaceCache } from "./workspaces";
+import { ScopePRovider } from "./providers/scopeProvider";
 
 const pkgUp = require("pkg-up");
 
@@ -24,6 +25,7 @@ let changedPackagesProvider: MonorepoChangedPackagesProvider;
 let treeView: vscode.TreeView<DependencyTreeItem | vscode.TreeItem>;
 let changedPackagesView: vscode.TreeView<DependencyTreeItem>;
 let changeFilesView: vscode.TreeView<vscode.TreeItem>;
+let scoperView: vscode.TreeView<vscode.TreeItem>;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -47,6 +49,8 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   treeProvider = new MonorepoDependenciesProvider(cwd, pkg);
   changedPackagesProvider = new MonorepoChangedPackagesProvider(cwd, pkg);
   const detailsProvider = new MonorepoDetailsProvider(cwd, pkg);
+  const scopeProvider = new ScopePRovider(cwd, pkg);
+
   const changeFilesProvider = new ChangeFilesProvider(cwd, pkg);
   treeView = vscode.window.createTreeView("monorepoDependencies", {
     treeDataProvider: treeProvider,
@@ -54,6 +58,9 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
 
   treeView = vscode.window.createTreeView("monorepoDetails", {
     treeDataProvider: detailsProvider,
+  });
+  scoperView = vscode.window.createTreeView("scoper", {
+    treeDataProvider: scopeProvider,
   });
 
   // TODO: only load this tree view when beachball is present
