@@ -23,7 +23,7 @@ import fs from "fs";
 
 type TreeChangeEvent = DependencyTreeItem | undefined | null | void;
 
-export class ScopePRovider
+export class ScoperPovider
   implements TreeDataProvider<DependencyTreeItem | TreeItem>
 {
   private _onDidChangeTreeData: EventEmitter<TreeChangeEvent> =
@@ -79,46 +79,77 @@ export class ScopePRovider
   ): Promise<(DependencyTreeItem | TreeItem)[]> {
     const children = [];
 
-    console.log(element);
-
     if (element && element.id) {
       const groupPath = path.join(
         this.workspaceRoot,
         ".scoper",
         "groups",
-        element.id
+        `${element.id}.json`
       );
       const group = await readJson(groupPath);
-      const pkgsOrExprs = group.packages || group.expressions || [];
 
-      return [
-        pkgsOrExprs.packages.map((pkg: string) => {
-          const item = new TreeItem(pkg, TreeItemCollapsibleState.None);
-          item.iconPath = new ThemeIcon("package");
-          item.id = group.name;
-          item.tooltip = group.contact;
-          return item;
-        }),
-      ];
+      // Hurray for nested ternaries...
+      const pkgsOrExprs = group.packages.length
+        ? group.packages
+        : group.expressions.length
+        ? group.expressions
+        : [];
+
+      const addGroupItem = new TreeItem(
+        "Add Group",
+        TreeItemCollapsibleState.None
+      );
+      const description = pkgsOrExprs.join("\n");
+      addGroupItem.iconPath = new ThemeIcon("package");
+      addGroupItem.tooltip = description;
+      addGroupItem.command = {
+        command: "vscode-monorepo-tools.scoper.addGroup",
+        title: "Add Group",
+        arguments: [element.id],
+      };
+
+      const editGroup = new TreeItem(
+        "Edit Group",
+        TreeItemCollapsibleState.None
+      );
+      editGroup.iconPath = new ThemeIcon("edit");
+      editGroup.tooltip = groupPath;
+      editGroup.description = groupPath;
+      editGroup.command = {
+        command: "vscode-monorepo-tools.openFile",
+        title: "Add Group",
+        arguments: [groupPath],
+      };
+
+      const contact = new TreeItem(
+        group.contact,
+        TreeItemCollapsibleState.None
+      );
+      contact.iconPath = new ThemeIcon("mail");
+      contact.command = {
+        command: "vscode-monorepo-tools.goToUrl",
+        title: "Contact",
+        arguments: [`mailto:${group.contact}`],
+      };
+
+      return [contact, addGroupItem, editGroup];
     }
-
-    // const root = await this.getRootItem();
-    // const repoUrl =
-    //   typeof root.workspace.repository === "string"
-    //     ? root.workspace.repository
-    //     : root.workspace.repository?.url;
-
-    // children.push(root);
 
     const groups = await fs.readdirSync(
       path.join(this.workspaceRoot, ".scoper", "groups"),
       "utf8"
     );
     for (const group of groups) {
-      const groupItem = new TreeItem(group.toString().replace(".json", ""));
+      const id = group.toString().replace(".json", "");
+      const groupItem = new TreeItem(id);
       groupItem.iconPath = new ThemeIcon("folder");
-      groupItem.id = group;
-      groupItem.collapsibleState = TreeItemCollapsibleState.Expanded;
+      groupItem.id = id;
+      groupItem.collapsibleState = TreeItemCollapsibleState.Collapsed;
+      groupItem.command = {
+        command: "vscode-monorepo-tools.scoper.openGroup",
+        title: "Open Group",
+        arguments: [id],
+      };
 
       children.push(groupItem);
     }

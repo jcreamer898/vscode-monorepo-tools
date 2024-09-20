@@ -26,6 +26,6 @@ export class InstallCommand {
     terminal.show();
     terminal.sendText(`cd ${this.treeProvider.workspaceRoot}`);
     terminal.sendText(cmd);
-    await this.treeProvider.refreshGraph();
+    this.treeProvider.refreshGraph();
   }
 }

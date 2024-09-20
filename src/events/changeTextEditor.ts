@@ -12,6 +12,7 @@ export class ChangeTextEditorEvent {
   statusBarItem: vscode.StatusBarItem;
   detailsProvider: MonorepoDetailsProvider;
   changeFilesProvider: ChangeFilesProvider;
+  pkg: string;
 
   constructor(
     treeProvider: MonorepoDependenciesProvider,
@@ -19,7 +20,8 @@ export class ChangeTextEditorEvent {
     statusBarItem: vscode.StatusBarItem,
     changedPackagesProvider: MonorepoChangedPackagesProvider,
     detailsProvider: MonorepoDetailsProvider,
-    changeFilesProvider: ChangeFilesProvider
+    changeFilesProvider: ChangeFilesProvider,
+    pkg: string
   ) {
     this.treeProvider = treeProvider;
     this.treeView = treeView;
@@ -27,11 +29,10 @@ export class ChangeTextEditorEvent {
     this.changedPackagesProvider = changedPackagesProvider;
     this.changeFilesProvider = changeFilesProvider;
     this.detailsProvider = detailsProvider;
+    this.pkg = pkg;
   }
 
-  async run() {
-    const filename = vscode.window.activeTextEditor?.document.fileName;
-
+  async run(filename: string) {
     if (!filename) {
       return;
     }
@@ -45,6 +46,7 @@ export class ChangeTextEditorEvent {
 
     // TODO: sthis is bad, don't do this, move the workspace state to something else
     this.detailsProvider.workspaceRoot = this.treeProvider.workspaceRoot;
+    this.detailsProvider.activePackage = this.treeProvider.activePackage;
     this.detailsProvider.refresh();
     this.changeFilesProvider.refresh();
   }

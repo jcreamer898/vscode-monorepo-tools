@@ -18,18 +18,10 @@ export const scriptRunner = (
   if (script === "add") {
     const [addPackage] = args;
 
-    return addScripts(
-      workspaceTool,
-      dependency.workspace.packageJson.name,
-      addPackage
-    );
+    return addScripts(workspaceTool, dependency.workspace.name, addPackage);
   }
 
-  return packageRunScripts(
-    workspaceTool,
-    dependency.workspace.packageJson.name,
-    script
-  );
+  return packageRunScripts(workspaceTool, dependency.workspace.name, script);
 };
 
 export const installScripts = (workspaceTool: string) => {

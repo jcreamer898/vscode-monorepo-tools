@@ -2,7 +2,7 @@
   "name": "vscode-monorepo-tools",
   "displayName": "vscode-monorepo-tools",
   "description": "Tools for working in monorepos.",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "publisher": "jcreamer",
   "repository": {
     "type": "git",
@@ -110,6 +110,18 @@
       {
         "command": "vscode-monorepo-tools.goToUrl",
         "title": "Open Url"
+      },
+      {
+        "command": "vscode-monorepo-tools.scoper.addGroup",
+        "title": "Scoper Add Group"
+      },
+      {
+        "command": "vscode-monorepo-tools.scoper.reset",
+        "title": "Scoper Reset",
+        "icon": {
+          "light": "resources/clear-all-dark.svg",
+          "dark": "resources/clear-all-light.svg"
+        }
       },
       {
         "command": "vscode-monorepo-tools.goToRoot",
@@ -246,6 +258,11 @@
         {
           "command": "vscode-monorepo-tools.runChange",
           "when": "view == changedPackages",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-monorepo-tools.scoper.reset",
+          "when": "view == scoper",
           "group": "navigation"
         }
       ]

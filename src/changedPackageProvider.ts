@@ -172,8 +172,7 @@ export class MonorepoChangedPackagesProvider
     return changedPackagesMap;
   }
 
-  async refreshGraph() {
-    await this.loadChangedPackages();
+  refreshGraph() {
     this.refresh();
   }
 

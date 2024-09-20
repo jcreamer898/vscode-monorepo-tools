@@ -125,6 +125,26 @@ export class MonorepoDetailsProvider
       children.push(homepage);
     }
 
+    if (this.activePackage) {
+      const pkg = this.activePackage;
+
+      const pkgItem = new TreeItem(
+        `Package: ${this.activePackage.workspace.name}`,
+        TreeItemCollapsibleState.None
+      );
+
+      pkgItem.id = "active-pkg-" + pkg.workspace.name;
+      pkgItem.iconPath = new ThemeIcon("package");
+      pkgItem.tooltip = pkg.workspace.name;
+      pkgItem.command = {
+        command: "vscode-monorepo-tools.goToPackage",
+        title: "Open Package.json",
+        arguments: [pkg],
+      };
+
+      children.push(pkgItem);
+    }
+
     return children;
   }
 

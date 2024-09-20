@@ -181,8 +181,7 @@ export class MonorepoDependenciesProvider
     };
   }
 
-  async refreshGraph() {
-    await this.loadDependencyTree(this.workspaceRoot);
+  refreshGraph() {
     this.refresh();
   }
 
