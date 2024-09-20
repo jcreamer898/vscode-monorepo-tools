@@ -56,6 +56,6 @@ export class AddDependencyCommand {
       terminal.sendText(cmd);
     }
 
-    await this.treeProvider.refreshGraph();
+    this.treeProvider.refreshGraph();
   }
 }

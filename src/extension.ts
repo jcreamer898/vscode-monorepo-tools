@@ -15,6 +15,7 @@ import { MonorepoChangedPackagesProvider } from "./changedPackageProvider";
 import { MonorepoDetailsProvider } from "./providers/detailsProvider";
 import { ChangeFilesProvider } from "./providers/changeFilesProvider";
 import { clearWorkspaceCache } from "./workspaces";
+import { ScoperPovider } from "./providers/scopeProvider";
 
 const pkgUp = require("pkg-up");
 
@@ -24,6 +25,7 @@ let changedPackagesProvider: MonorepoChangedPackagesProvider;
 let treeView: vscode.TreeView<DependencyTreeItem | vscode.TreeItem>;
 let changedPackagesView: vscode.TreeView<DependencyTreeItem>;
 let changeFilesView: vscode.TreeView<vscode.TreeItem>;
+let scoperView: vscode.TreeView<vscode.TreeItem>;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -47,6 +49,11 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   treeProvider = new MonorepoDependenciesProvider(cwd, pkg);
   changedPackagesProvider = new MonorepoChangedPackagesProvider(cwd, pkg);
   const detailsProvider = new MonorepoDetailsProvider(cwd, pkg);
+
+  await treeProvider.loadDependencyTree(cwd);
+
+  const scopeProvider = new ScoperPovider(cwd, pkg);
+
   const changeFilesProvider = new ChangeFilesProvider(cwd, pkg);
   treeView = vscode.window.createTreeView("monorepoDependencies", {
     treeDataProvider: treeProvider,
@@ -54,6 +61,9 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
 
   treeView = vscode.window.createTreeView("monorepoDetails", {
     treeDataProvider: detailsProvider,
+  });
+  scoperView = vscode.window.createTreeView("scoper", {
+    treeDataProvider: scopeProvider,
   });
 
   // TODO: only load this tree view when beachball is present
@@ -77,7 +87,8 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
     statusBarItem,
     changedPackagesProvider,
     detailsProvider,
-    changeFilesProvider
+    changeFilesProvider,
+    pkg
   );
 
   const commands: Record<string, CommandCallback> = {
@@ -135,10 +146,44 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       terminal.sendText(`cd ${cwd}`);
       terminal.sendText(`yarn change`);
     },
+    "vscode-monorepo-tools.scoper.addGroup": (name: string) => {
+      const terminal =
+        vscode.window.terminals.find((t) => t.name === `Scoper`) ||
+        vscode.window.createTerminal(`Scoper`);
+
+      terminal.show();
+      terminal.sendText(`cd ${cwd}`);
+      terminal.sendText(`yarn scoper add ${name}`);
+    },
+    "vscode-monorepo-tools.scoper.reset": () => {
+      const terminal =
+        vscode.window.terminals.find((t) => t.name === `Scoper`) ||
+        vscode.window.createTerminal(`Scoper`);
+
+      terminal.show();
+      terminal.sendText(`cd ${cwd}`);
+      terminal.sendText(`yarn scoper reset`);
+    },
+    "vscode-monorepo-tools.scoper.status": () => {
+      const terminal =
+        vscode.window.terminals.find((t) => t.name === `Scoper`) ||
+        vscode.window.createTerminal(`Scoper`);
+
+      terminal.show();
+      terminal.sendText(`cd ${cwd}`);
+      terminal.sendText(`yarn scoper status`);
+    },
   };
 
+  const changeTextEditorSubscription =
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      if (editor) {
+        editorChange.run(editor.document.fileName);
+      }
+    });
+
   subscriptions.push(
-    vscode.window.onDidChangeActiveTextEditor(() => editorChange.run()),
+    changeTextEditorSubscription,
     treeView,
     statusBarItem,
     ...Object.entries(commands).map(([name, callback]) =>
@@ -160,7 +205,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
   statusBarItem.show();
   statusBarItem.text = "Loading workspace...";
 
-  await editorChange.run();
+  await editorChange.run(pkg);
 }
 
 // this method is called when your extension is deactivated
