@@ -155,6 +155,7 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       terminal.show();
       terminal.sendText(`cd ${cwd}`);
       terminal.sendText(`yarn scoper add ${name}`);
+      terminal.sendText(`yarn scoper apply`);
     },
     "vscode-monorepo-tools.scoper.reset": () => {
       const terminal =
