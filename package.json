@@ -146,6 +146,10 @@
           "light": "resources/request-changes-light.svg",
           "dark": "resources/request-changes-dark.svg"
         }
+      },
+      {
+        "command": "vscode-monorepo-tools.scopedSearch",
+        "title": "Monorepo Tools: Scoped Search"
       }
     ],
     "views": {

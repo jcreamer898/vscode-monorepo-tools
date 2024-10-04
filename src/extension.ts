@@ -16,6 +16,7 @@ import { MonorepoDetailsProvider } from "./providers/detailsProvider";
 import { ChangeFilesProvider } from "./providers/changeFilesProvider";
 import { clearWorkspaceCache } from "./workspaces";
 import { ScoperPovider } from "./providers/scopeProvider";
+import { ScopedSearchCommand } from "./commands/scopedSearch";
 
 const pkgUp = require("pkg-up");
 
@@ -173,6 +174,8 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       terminal.sendText(`cd ${cwd}`);
       terminal.sendText(`yarn scoper status`);
     },
+    "vscode-monorepo-tools.scopedSearch": () =>
+      new ScopedSearchCommand(treeProvider).run(),
   };
 
   const changeTextEditorSubscription =

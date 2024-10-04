@@ -109,6 +109,44 @@ export class MonorepoDependenciesProvider
     return [];
   }
 
+  getChildrenRecursively(element: DependencyTreeItem): DependencyTreeItem[] {
+    // Stack to process dependencies iteratively
+    const stack: string[] = [element.workspace.name];
+
+    // Track visited packages
+    const visited = new Set<string>();
+
+    // A flat list of packages that are dependencies for a given package key.
+    const dependencies: DependencyTreeItem[] = [];
+
+    // Iterate while there are packages to process in the stack
+    while (stack.length > 0) {
+      // Pop the next package key from the stack
+      const currentPackageKey = stack.pop();
+
+      // If the currentPackageKey is undefined or already visited, skip processing
+      if (currentPackageKey === undefined || visited.has(currentPackageKey)) {
+        continue;
+      }
+
+      // Mark the package as visited
+      visited.add(currentPackageKey);
+
+      // Retrieve the current package from the workspace
+      const currentPackage = this.items.get(currentPackageKey);
+
+      if (currentPackage) {
+        dependencies.push(currentPackage);
+
+        // Add its dependencies to the stack
+        const workspaceDependencies = currentPackage.workspace.children;
+        workspaceDependencies?.forEach((dep) => stack.push(dep));
+      }
+    }
+
+    return dependencies;
+  }
+
   getRootItem(items: Map<string, DependencyTreeItem>) {
     const workspaceRoot = getWorkspaceRoot(this.workspaceRoot)!;
     const workspacePackage = readJson(path.join(workspaceRoot, "package.json"));
