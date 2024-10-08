@@ -31,6 +31,10 @@ Monorepo Tools is a VSCode extension that gives developers insight into their mo
 
 ![image](https://github.com/jcreamer898/vscode-monorepo-tools/assets/472487/95252c36-3500-4c7d-bb85-53e36e27db40)
 
+- Scoped search that allows users to quickly narrow down the search space to a package's dependencies.
+
+![Screen Recording 2024-10-08 at 21 31 49](https://github.com/user-attachments/assets/9bb6b321-0aa1-4293-bfff-a0c2fb7c0918)
+
 - Add dependencies to a package
 
 ![Screen Capture on 2021-03-26 at 11-51-22](https://user-images.githubusercontent.com/472487/112666145-db5c6180-8e29-11eb-8950-87b1ba4a9c2a.gif)
