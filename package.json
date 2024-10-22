@@ -112,8 +112,16 @@
         "title": "Open Url"
       },
       {
+        "command": "vscode-monorepo-tools.scoper.status",
+        "title": "Scoper Status"
+      },
+      {
         "command": "vscode-monorepo-tools.scoper.addGroup",
         "title": "Scoper Add Group"
+      },
+      {
+        "command": "vscode-monorepo-tools.scoper.removeGroup",
+        "title": "Scoper Remove Group"
       },
       {
         "command": "vscode-monorepo-tools.scoper.reset",
