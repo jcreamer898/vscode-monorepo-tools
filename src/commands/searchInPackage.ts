@@ -15,7 +15,7 @@ export class SearchInPackageCommand {
   }
 
   async run(node: DependencyTreeItem) {
-    const filePath = path.join(node.workspace.dir);
+    const filePath = path.dirname(node.workspace.packageJsonPath);
     vscode.commands.executeCommand("workbench.action.findInFiles", {
       query: "",
       filesToInclude: filePath,
