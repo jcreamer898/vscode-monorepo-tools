@@ -157,6 +157,16 @@ export async function activate({ subscriptions }: vscode.ExtensionContext) {
       terminal.sendText(`yarn scoper add ${name}`);
       terminal.sendText(`yarn scoper apply`);
     },
+
+    "vscode-monorepo-tools.scoper.removeGroup": (name: string) => {
+      const terminal =
+        vscode.window.terminals.find((t) => t.name === `Scoper`) ||
+        vscode.window.createTerminal(`Scoper`);
+      terminal.show();
+      terminal.sendText(`cd ${cwd}`);
+      terminal.sendText(`yarn scoper remove ${name}`);
+      terminal.sendText(`yarn scoper apply`);
+    },
     "vscode-monorepo-tools.scoper.reset": () => {
       const terminal =
         vscode.window.terminals.find((t) => t.name === `Scoper`) ||

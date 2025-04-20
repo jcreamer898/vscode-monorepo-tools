@@ -108,6 +108,18 @@ export class ScoperPovider
         arguments: [element.id],
       };
 
+      const removeGroupItem = new TreeItem(
+        "Remove Group",
+        TreeItemCollapsibleState.None
+      );
+      addGroupItem.iconPath = new ThemeIcon("package");
+      addGroupItem.tooltip = description;
+      addGroupItem.command = {
+        command: "vscode-monorepo-tools.scoper.removeGroup",
+        title: "Remove Group",
+        arguments: [element.id],
+      };
+
       const editGroup = new TreeItem(
         "Edit Group",
         TreeItemCollapsibleState.None
@@ -132,7 +144,7 @@ export class ScoperPovider
         arguments: [`mailto:${group.contact}`],
       };
 
-      return [contact, addGroupItem, editGroup];
+      return [contact, addGroupItem, removeGroupItem, editGroup];
     }
 
     const groups = await fs.readdirSync(
